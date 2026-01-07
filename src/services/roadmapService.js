@@ -1,5 +1,4 @@
-// src/services/roadmapService.js
-import api from '../api/api';
+import api from './api';
 
 const roadmapService = {
   // جلب خارطة الطريق لفكرة
@@ -8,87 +7,115 @@ const roadmapService = {
       const response = await api.get(`/ideas/${ideaId}/roadmap`);
       return response.data;
     } catch (error) {
-      console.error('خطأ في جلب خارطة الطريق:', error);
+      console.error('Error fetching roadmap:', error);
       throw error;
     }
   },
 
-  // تحويل بيانات الباكند إلى تنسيق الجدول الزمني
-  transformRoadmapData: (roadmapData) => {
-    // مراحل الـ roadmap كما في الكود PHP
-    const ROADMAP_STAGES = [
-      "تقديم الفكرة",
-      "التقييم الأولي",
-      "التخطيط المنهجي",
-      "التقييم المتقدم قبل التمويل",
-      "التمويل",
-      "التنفيذ والتطوير",
-      "الإطلاق",
-      "المتابعة بعد الإطلاق",
-      "استقرار المشروع وانفصاله عن المنصة",
+  // جلب مراحل المنصة من الباك إند
+  getPlatformStages: async () => {
+    try {
+      const response = await api.get('/platform/roadmap-stages');
+      return response.data.platform_roadmap_stages;
+    } catch (error) {
+      console.error('Error fetching platform stages:', error);
+      // استخدام بيانات افتراضية (نفس الباك إند بالضبط)
+      return this.getDefaultStages();
+    }
+  },
+
+  // البيانات الافتراضية (نفس الباك إند تماماً)
+  getDefaultStages() {
+    return [
+      {
+        name: "Idea Submission",
+        message_for_owner: "You need to submit your idea with all required details, wait for committee evaluation."
+      },
+      {
+        name: "Initial Evaluation",
+        message_for_owner: "The committee will evaluate your idea and provide initial feedback. You don't need to do anything at this stage except follow up."
+      },
+      {
+        name: "Systematic Planning / Business Plan Preparation",
+        message_for_owner: "You need to prepare a systematic business plan and send it to the committee for review."
+      },
+      {
+        name: "Advanced Evaluation Before Funding",
+        message_for_owner: "The committee will assess your project's readiness for funding. Respond to any feedback if requested."
+      },
+      {
+        name: "Funding",
+        message_for_owner: "You need to submit a funding request specifying needs, the committee or investor will approve or request modifications."
+      },
+      {
+        name: "Execution and Development",
+        message_for_owner: "Implement the project and submit reports, the committee will review progress and provide recommendations."
+      },
+      {
+        name: "Launch",
+        message_for_owner: "Prepare the project for launch and review readiness, the committee will approve launch and provide recommendations."
+      },
+      {
+        name: "Post-Launch Follow-up",
+        message_for_owner: "The committee will submit follow-up reports, you monitor and address any feedback or issues."
+      },
+      {
+        name: "Project Stabilization / Platform Separation",
+        message_for_owner: "If necessary, submit a request for project separation from the platform and complete required documents, the committee will approve stabilization and separation."
+      }
     ];
+  },
 
-    const currentStage = roadmapData.roadmap?.current_stage || ROADMAP_STAGES[0];
-    const currentStageIndex = ROADMAP_STAGES.indexOf(currentStage);
-    const progressPercentage = roadmapData.roadmap?.progress_percentage || 0;
-
-    // وصف كل مرحلة
-    const stageDescriptions = {
-      "تقديم الفكرة": "مرحلة تقديم الفكرة وتسجيلها في النظام",
-      "التقييم الأولي": "تقييم أولي للفكرة من قبل اللجنة المختصة",
-      "التخطيط المنهجي": "وضع خطة منهجية مفصلة للتنفيذ",
-      "التقييم المتقدم قبل التمويل": "تقييم متعمق للفكرة قبل منح التمويل",
-      "التمويل": "حصول الفكرة على التمويل اللازم للتنفيذ",
-      "التنفيذ والتطوير": "مرحلة التنفيذ الفعلي وتطوير المشروع",
-      "الإطلاق": "إطلاق المشروع للجمهور المستهدف",
-      "المتابعة بعد الإطلاق": "متابعة أداء المشروع بعد الإطلاق",
-      "استقرار المشروع وانفصاله عن المنصة": "وصول المشروع للاستقرار والاستقلالية"
-    };
-
+  // تحويل البيانات للعرض في التايم لاين
+  transformRoadmapData: (roadmapData, platformStages) => {
     // ألوان المراحل
     const STEP_COLORS = [
-      { main: '#EF4444', light: '#FECACA', dark: '#DC2626' },
-      { main: '#3B82F6', light: '#DBEAFE', dark: '#2563EB' },
-      { main: '#10B981', light: '#D1FAE5', dark: '#059669' },
-      { main: '#F59E0B', light: '#FEF3C7', dark: '#D97706' },
-      { main: '#8B5CF6', light: '#EDE9FE', dark: '#7C3AED' },
-      { main: '#EC4899', light: '#FCE7F3', dark: '#DB2777' },
-      { main: '#06B6D4', light: '#CFFAFE', dark: '#0891B2' },
-      { main: '#84CC16', light: '#ECFCCB', dark: '#65A30D' },
-      { main: '#F97316', light: '#FFEDD5', dark: '#EA580C' },
+      { main: '#FFD6BA', light: '#FFE8D6', dark: '#E0B89B' },
+      { main: '#FFF9BD', light: '#FFFCE6', dark: '#E6DF9F' },
+      { main: '#A3DC9A', light: '#D4F1C5', dark: '#8CC084' },
+      { main: '#FFD6BA', light: '#FFE8D6', dark: '#E0B89B' },
+      { main: '#FFF9BD', light: '#FFFCE6', dark: '#E6DF9F' },
+      { main: '#A3DC9A', light: '#D4F1C5', dark: '#8CC084' },
+      { main: '#FFD6BA', light: '#FFE8D6', dark: '#E0B89B' },
+      { main: '#FFF9BD', light: '#FFFCE6', dark: '#E6DF9F' },
+      { main: '#A3DC9A', light: '#D4F1C5', dark: '#8CC084' },
     ];
 
-    // إنشاء مراحل الجدول الزمني
-    return ROADMAP_STAGES.map((stage, idx) => {
+    // البحث عن المرحلة الحالية
+    const currentStage = roadmapData.roadmap?.current_stage || "Idea Submission";
+    
+    // إنشاء مصفوفة المراحل للعرض
+    return platformStages.map((stage, idx) => {
+      const isCurrent = stage.name === currentStage;
+      const stageIndex = platformStages.findIndex(s => s.name === currentStage);
+      const isCompleted = idx < (stageIndex !== -1 ? stageIndex : 0);
+      
       // تحديد حالة المرحلة
       let status = 'pending';
       let progress = 0;
       
-      if (idx < currentStageIndex) {
+      if (isCompleted) {
         status = 'completed';
         progress = 100;
-      } else if (idx === currentStageIndex) {
+      } else if (isCurrent) {
         status = 'current';
-        progress = progressPercentage;
+        progress = roadmapData.roadmap?.progress_percentage || 0;
       }
 
-      const colors = STEP_COLORS[idx % STEP_COLORS.length];
+      const colors = STEP_COLORS[idx];
 
       return {
         id: idx + 1,
-        stage_name: stage,
+        stage_name: stage.name, // الإنجليزية مباشرة
         status: status,
         progress: progress,
-        description: stageDescriptions[stage] || stage,
+        description: stage.message_for_owner, // الرسالة بالإنجليزية
         colors: colors,
-        isCurrent: status === 'current',
-        isCompleted: status === 'completed',
-        link: {
-          url: `/ideas/${roadmapData.idea_id}/stage/${idx + 1}`,
-          label: 'عرض تفاصيل المرحلة'
-        },
+        isCurrent: isCurrent,
+        isCompleted: isCompleted,
+        message: stage.message_for_owner,
         category: {
-          tag: stage,
+          tag: stage.name,
           color: colors.main,
           bgColor: colors.light
         }

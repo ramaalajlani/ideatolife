@@ -60,10 +60,12 @@ const GanttFullPage = () => {
     const [loadingEvaluations, setLoadingEvaluations] = useState({});
     const [showAllEvaluations, setShowAllEvaluations] = useState(false);
     
-    // حالات التمويل
+    // حالات التمويل - أصبحت لتخزين طلبات التمويل فقط (لا تحميل)
     const [fundingItem, setFundingItem] = useState(null);
     const [fundingItemType, setFundingItemType] = useState(null);
     const [fundingLoading, setFundingLoading] = useState(false);
+    
+    // تخزين طلبات التمويل التي تم تقديمها محلياً
     const [fundingRequests, setFundingRequests] = useState({});
     
     // حالات الغرامة
@@ -180,7 +182,6 @@ const GanttFullPage = () => {
                 }
                 
                 fetchPhaseEvaluations(cleanedPhases);
-                fetchFundingRequests(cleanedPhases);
             } else {
                 setPhases([]);
             }
@@ -235,46 +236,6 @@ const GanttFullPage = () => {
         setLoadingEvaluations(loadingStates);
     };
 
-    const fetchFundingRequests = async (phasesList) => {
-        const requests = {};
-        
-        try {
-            for (const phase of phasesList) {
-                // جلب طلبات تمويل المرحلة
-                try {
-                    const fundingResponse = await fundingService.getPhaseFundingRequests(phase.id);
-                    if (fundingResponse?.data?.length > 0) {
-                        requests[`phase_${phase.id}`] = {
-                            ...fundingResponse.data[0],
-                            type: 'phase'
-                        };
-                    }
-                } catch (err) {
-                    console.error(`Error fetching funding for phase ${phase.id}:`, err);
-                }
-                
-                // جلب طلبات تمويل المهام
-                for (const task of phase.tasks || []) {
-                    try {
-                        const taskFundingResponse = await fundingService.getTaskFundingRequests(task.id);
-                        if (taskFundingResponse?.data?.length > 0) {
-                            requests[`task_${task.id}`] = {
-                                ...taskFundingResponse.data[0],
-                                type: 'task'
-                            };
-                        }
-                    } catch (err) {
-                        console.error(`Error fetching funding for task ${task.id}:`, err);
-                    }
-                }
-            }
-            
-            setFundingRequests(requests);
-        } catch (err) {
-            console.error('Error fetching funding requests:', err);
-        }
-    };
-
     const handlePayPenalty = async () => {
         if (!ideaId || !penaltyData?.penalty_amount) return;
         
@@ -301,7 +262,7 @@ const GanttFullPage = () => {
         try {
             setFundingLoading(true);
             
-            // تحقق من وجود طلب تمويل سابق
+            // تحقق من وجود طلب تمويل سابق محلياً
             const requestKey = `${type}_${item.id}`;
             const existingFunding = fundingRequests[requestKey];
             
@@ -351,13 +312,17 @@ const GanttFullPage = () => {
             setFundingItem(null);
             setFundingItemType(null);
             
-            // تحديث طلبات التمويل
+            // تخزين طلب التمويل محلياً
             const requestKey = `${fundingItemType}_${fundingItem.id}`;
             setFundingRequests(prev => ({
                 ...prev,
                 [requestKey]: {
                     ...response.funding,
-                    type: fundingItemType
+                    type: fundingItemType,
+                    requested_amount: fundingData.requested_amount,
+                    description: fundingData.description,
+                    status: 'pending', // افتراضي
+                    submitted_at: new Date().toISOString()
                 }
             }));
             
@@ -710,8 +675,8 @@ const GanttFullPage = () => {
             ref={containerRef}
         >
             {/* الهيدر */}
-            <div className="bg-white border-b border-gray-300 shadow-lg flex-shrink-0 relative min-h-[120px]">
-                <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-r from-blue-50/30 to-orange-50/20">
+            <div className="bg-[#FFD586] border-b border-gray-300 shadow-lg flex-shrink-0 relative min-h-[120px]">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div 
                         ref={animationContainer1}
                         className="absolute -top-6 -left-6 w-36 h-36 opacity-15"

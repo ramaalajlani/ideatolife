@@ -1,7 +1,7 @@
 import React from 'react';
 
 const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMeetingSelect }) => {
-  const daysOfWeek = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -48,10 +48,8 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
 
-  // إنشاء مصفوفة الأيام
   const days = [];
   
-  // أيام الشهر السابق
   const daysInPrevMonth = getDaysInMonth(prevMonth());
   for (let i = firstDayOfMonth - 1; i >= 0; i--) {
     const dayDate = new Date(currentYear, currentMonth - 1, daysInPrevMonth - i);
@@ -62,7 +60,6 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
     });
   }
 
-  // أيام الشهر الحالي
   for (let day = 1; day <= daysInMonth; day++) {
     const dayDate = new Date(currentYear, currentMonth, day);
     days.push({
@@ -72,8 +69,7 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
     });
   }
 
-  // أيام الشهر التالي
-  const remainingDays = 42 - days.length; // 6 أسطر × 7 أيام
+  const remainingDays = 42 - days.length;
   for (let day = 1; day <= remainingDays; day++) {
     const dayDate = new Date(currentYear, currentMonth + 1, day);
     days.push({
@@ -91,11 +87,11 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
           onClick={() => onDateSelect(prevMonth())}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
-          ‹ الشهر السابق
+          ‹ Previous Month
         </button>
         
         <h2 className="text-xl font-bold text-gray-800">
-          {currentDate.toLocaleDateString('ar-SA', { 
+          {currentDate.toLocaleDateString([], { 
             month: 'long', 
             year: 'numeric' 
           })}
@@ -105,7 +101,7 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
           onClick={() => onDateSelect(nextMonth())}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
-          الشهر التالي ›
+          Next Month ›
         </button>
       </div>
 
@@ -174,7 +170,7 @@ const CalendarGrid = ({ currentDate, selectedDate, meetings, onDateSelect, onMee
                 
                 {day.meetings.length > 2 && (
                   <div className="text-xs text-gray-500 text-center">
-                    +{day.meetings.length - 2} أكثر
+                    +{day.meetings.length - 2} more
                   </div>
                 )}
               </div>

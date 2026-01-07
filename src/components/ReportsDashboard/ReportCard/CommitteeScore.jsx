@@ -1,39 +1,60 @@
 import React from 'react';
-import { Users, TrendingUp } from 'lucide-react';
-import { getScoreColor } from '../utils';
+import { TrendingUp } from 'lucide-react';
 
-// src/components/ReportsDashboard/CommitteeScore.jsx
-const CommitteeScore = ({ committee, score }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <Users size={16} className="text-gray-600" />
-        <p className="text-sm text-gray-600">اللجنة المسؤولة</p>
-      </div>
-      <p className="font-medium text-gray-900 text-sm bg-gray-50 p-2 rounded border text-right">
-        {committee || "غير محدد"}
-      </p>
-    </div>
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <TrendingUp size={16} className="text-gray-600" />
-        <p className="text-sm text-gray-600">درجة التقييم</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className={`px-4 py-2 rounded-lg font-bold text-white shadow-sm ${getScoreColor(score)}`}>
-          {score}%
-        </span>
-        <div className="flex-1">
-          <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
-            <div 
-              className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 shadow-sm"
-              style={{ width: `${Math.min(score, 100)}%` }}
-            />
-          </div>
+const getScoreColor = (score) => {
+  const numericScore = parseFloat(score) || 0;
+  
+  if (numericScore >= 80) return 'bg-[#8FD14F]/20 hover:bg-[#8FD14F]/30 text-black';
+  if (numericScore >= 60) return 'bg-[#8FD14F]/20 hover:bg-[#8FD14F]/30 text-black';
+  if (numericScore >= 40) return 'bg-[#8FD14F]/20 hover:bg-[#8FD14F]/30 text-black';
+  return 'bg-[#8FD14F]/20 hover:bg-[#8FD14F]/30 text-black';
+};
+
+const CommitteeScore = ({ score }) => {
+  const numericScore = parseFloat(score) || 0;
+  
+  return (
+    <div className="mb-6 p-4 bg-[#8FD14F]/10 rounded-lg border border-[#8FD14F]/20">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={18} className="text-[#8FD14F]" />
+          <h4 className="font-semibold text-gray-800 text-sm">Evaluation Score</h4>
+        </div>
+        
+        <div className="text-right">
+          <span className={`px-4 py-2 rounded-lg font-bold shadow-sm transition-colors ${getScoreColor(score)}`}>
+            {numericScore.toFixed(2)}%
+          </span>
         </div>
       </div>
+      
+      <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner overflow-hidden">
+        <div 
+          className="h-3 rounded-full bg-gradient-to-r from-[#8FD14F]/90 to-[#8FD14F] transition-all duration-1000 ease-out"
+          style={{ width: `${Math.min(numericScore, 100)}%` }}
+        />
+      </div>
+      
+      <div className="flex justify-between mt-2 text-xs text-gray-500">
+        <span>0%</span>
+        <span>50%</span>
+        <span>100%</span>
+      </div>
+      
+      {/* Optional: Score interpretation */}
+      <div className="mt-3 text-xs text-gray-600">
+        {numericScore >= 80 ? (
+          <span className="text-[#8FD14F] font-medium">Excellent</span>
+        ) : numericScore >= 60 ? (
+          <span className="text-[#8FD14F] font-medium">Good</span>
+        ) : numericScore >= 40 ? (
+          <span className="text-[#8FD14F] font-medium">Fair</span>
+        ) : (
+          <span className="text-[#8FD14F] font-medium">Needs Improvement</span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default CommitteeScore;

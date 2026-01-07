@@ -6,7 +6,6 @@ export default function MainLayout({ children, ideaId = null, activeItem = 'home
   const navigate = useNavigate();
   const { ideaId: paramIdeaId } = useParams();
   
-  // استخدام معرف الفكرة من الـ params أو الـ prop
   const targetIdeaId = paramIdeaId || ideaId;
 
   return (
@@ -18,8 +17,8 @@ export default function MainLayout({ children, ideaId = null, activeItem = 'home
         />
       </Sidebar>
       <div className="flex-1 ml-20 lg:ml-64 transition-all duration-300">
-        <main className="p-4 md:p-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        <main className="pt-0 pr-0 pb-0 pl-4 md:pl-6">
+          <div>
             {children}
           </div>
         </main>

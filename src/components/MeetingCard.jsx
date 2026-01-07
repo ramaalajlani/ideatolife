@@ -16,7 +16,7 @@ const MeetingCard = ({ meeting, onSelect }) => {
       className={`border-l-4 p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
         meeting.is_soon 
           ? 'border-red-500 bg-red-50' 
-          : 'border-cyan-500 bg-gray-50'
+          : 'border-orange-500 bg-gray-50'
       }`}
       onClick={handleClick}
     >
@@ -35,14 +35,14 @@ const MeetingInfo = ({ meeting }) => (
     <h4 className="font-bold text-gray-800 text-lg">{meeting.idea_title}</h4>
     
     <div className="mt-2 space-y-1">
-      <InfoItem label="اللجنة" value={meeting.committee_name} />
+      <InfoItem label="Committee" value={meeting.committee_name} />
       <InfoItem 
-        label="الموعد" 
+        label="Date & Time" 
         value={`${dateUtils.formatMeetingDate(meeting.meeting_date)} - ${dateUtils.formatMeetingTime(meeting.meeting_date)}`} 
       />
-      <InfoItem label="النوع" value={meeting.type} />
-      {meeting.notes && <InfoItem label="ملاحظات" value={meeting.notes} />}
-      <InfoItem label="طلب بواسطة" value={meeting.requested_by} />
+      <InfoItem label="Type" value={meeting.type} />
+      {meeting.notes && <InfoItem label="Notes" value={meeting.notes} />}
+      <InfoItem label="Requested By" value={meeting.requested_by} />
     </div>
   </div>
 );
@@ -56,15 +56,15 @@ const InfoItem = ({ label, value }) => (
 const JoinButton = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="inline-flex items-center px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors text-sm whitespace-nowrap"
+    className="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm whitespace-nowrap"
   >
-    انضم للاجتماع
+    Join Meeting
   </button>
 );
 
 const SoonBadge = ({ hoursLeft }) => (
   <div className="mt-2 inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-    ⚡ اجتماع قريب ({hoursLeft} ساعة)
+    Soon ({hoursLeft} hours)
   </div>
 );
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import fundingService from "../services/fundingService";
-import axios from 'axios';
+import Lottie from "lottie-react";
+import walletAnimation from "../assets/animations/Wallet animation.json";
 
 const FundingRequestsCard = () => {
   const { ideaId } = useParams();
@@ -24,11 +25,11 @@ const FundingRequestsCard = () => {
   const [selectedFundingId, setSelectedFundingId] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // جلب بيانات التمويل
+  // Fetch funding data
   useEffect(() => {
     const loadFundingData = async () => {
       if (!ideaId) {
-        setError('لم يتم تحديد فكرة');
+        setError('No idea selected');
         setLoading(false);
         return;
       }
@@ -36,17 +37,17 @@ const FundingRequestsCard = () => {
       try {
         setLoading(true);
         
-        // جلب بيانات التمويل
+        // Fetch funding data
         const response = await fundingService.getFundingForIdea(ideaId);
         setFundingData(response);
         
-        // جلب بيانات الأهلية
+        // Fetch eligibility data
         const eligibility = await fundingService.checkFundingEligibility(ideaId);
         setFundingRequirements(eligibility);
         
       } catch (error) {
         console.error('Error loading funding data:', error);
-        setError(error.message || 'حدث خطأ في تحميل بيانات التمويل');
+        setError(error.message || 'Error loading funding data');
       } finally {
         setLoading(false);
       }
@@ -59,17 +60,17 @@ const FundingRequestsCard = () => {
     e.preventDefault();
     
     if (!ideaId) {
-      alert('❌ يرجى اختيار فكرة أولاً');
+      alert('❌ Please select an idea first');
       return;
     }
 
     if (!formData.requested_amount || parseFloat(formData.requested_amount) <= 0) {
-      alert('❌ يرجى إدخال مبلغ صحيح');
+      alert('❌ Please enter a valid amount');
       return;
     }
 
     if (!formData.justification.trim()) {
-      alert('❌ يرجى كتابة مبررات التمويل');
+      alert('❌ Please write funding justification');
       return;
     }
 
@@ -80,31 +81,31 @@ const FundingRequestsCard = () => {
         justification: formData.justification
       });
       
-      alert(`✅ ${response.message || 'تم تقديم طلب التمويل بنجاح!'}`);
+      alert(`✅ ${response.message || 'Funding request submitted successfully!'}`);
       
-      // تحديث البيانات
+      // Refresh data
       const updatedData = await fundingService.getFundingForIdea(ideaId);
       setFundingData(updatedData);
       
-      // إعادة تعيين النموذج
+      // Reset form
       setFormData({ requested_amount: "", justification: "" });
       setShowFundingForm(false);
       
     } catch (error) {
       console.error('Error submitting funding request:', error);
       
-      if (error.message?.includes('صلاحية')) {
+      if (error.message?.includes('eligibility')) {
         alert(`❌ ${error.message}`);
-      } else if (error.message?.includes('خطة العمل')) {
+      } else if (error.message?.includes('business plan')) {
         alert(`❌ ${error.message}`);
-      } else if (error.message?.includes('تقييم')) {
+      } else if (error.message?.includes('evaluation')) {
         alert(`❌ ${error.message}`);
-      } else if (error.message?.includes('طلب تمويل جديد')) {
+      } else if (error.message?.includes('new funding request')) {
         alert(`❌ ${error.message}`);
       } else if (error.message) {
         alert(`❌ ${error.message}`);
       } else {
-        alert('❌ حدث خطأ أثناء تقديم طلب التمويل');
+        alert('❌ Error submitting funding request');
       }
     } finally {
       setIsSubmitting(false);
@@ -121,13 +122,13 @@ const FundingRequestsCard = () => {
         { cancellation_reason: cancellationData.cancellation_reason }
       );
       
-      alert(`✅ ${response.message || 'تم إلغاء طلب التمويل بنجاح!'}`);
+      alert(`✅ ${response.message || 'Funding request cancelled successfully!'}`);
       
-      // تحديث البيانات
+      // Refresh data
       const updatedData = await fundingService.getFundingForIdea(ideaId);
       setFundingData(updatedData);
       
-      // إعادة تعيين
+      // Reset
       setShowCancelModal(false);
       setSelectedFundingId(null);
       setCancellationData({ cancellation_reason: "" });
@@ -135,14 +136,14 @@ const FundingRequestsCard = () => {
     } catch (error) {
       console.error('Error cancelling funding:', error);
       
-      if (error.message?.includes('صلاحية')) {
+      if (error.message?.includes('eligibility')) {
         alert(`❌ ${error.message}`);
-      } else if (error.message?.includes('لا يمكن إلغاء')) {
+      } else if (error.message?.includes('cannot cancel')) {
         alert(`❌ ${error.message}`);
       } else if (error.message) {
         alert(`❌ ${error.message}`);
       } else {
-        alert('❌ حدث خطأ أثناء إلغاء طلب التمويل');
+        alert('❌ Error cancelling funding request');
       }
     } finally {
       setIsCancelling(false);
@@ -167,19 +168,19 @@ const FundingRequestsCard = () => {
     setShowCancelModal(true);
   };
 
-  // إذا كان في حالة تحميل
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">جاري تحميل بيانات التمويل...</p>
+          <p className="text-gray-600 text-lg">Loading funding data...</p>
         </div>
       </div>
     );
   }
 
-  // إذا كان هناك خطأ
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50 flex items-center justify-center p-6">
@@ -189,33 +190,33 @@ const FundingRequestsCard = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-3">حدث خطأ</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-3">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => navigate('/ideas')}
             className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
-            العودة إلى قائمة الأفكار
+            Back to Ideas List
           </button>
         </div>
       </div>
     );
   }
 
-  // إذا لم توجد بيانات تمويل
+  // No funding data
   if (!fundingData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-3">لا توجد بيانات تمويل</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-3">No Funding Data</h2>
           <p className="text-gray-600 mb-6">
-            لا توجد طلبات تمويل لهذه الفكرة بعد.
+            No funding requests for this idea yet.
           </p>
           <button
             onClick={() => navigate(`/ideas/${ideaId}`)}
             className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
-            عرض الفكرة
+            View Idea
           </button>
         </div>
       </div>
@@ -223,6 +224,53 @@ const FundingRequestsCard = () => {
   }
 
   const { fundings, idea_title } = fundingData;
+
+  // Header Component with animation
+  const renderHeader = () => (
+    <div className="mb-8">
+      <div className="bg-[#FFD586] rounded-2xl shadow-2xl p-8 mb-6 overflow-hidden relative">
+        <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="md:w-2/3">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">
+              Smart Funding Gateway
+            </h1>
+            <p className="text-xl text-gray-800 mb-6">
+              Get the funding you need for your project <span className="font-bold text-green-700">"{idea_title}"</span>
+            </p>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg">
+                <span className="text-green-700 font-bold text-lg"> Unlimited Amount</span>
+                <span className="text-gray-700 text-sm ml-2"> - Request any amount you need</span>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg">
+                <span className="text-orange-700 font-bold text-lg"> Fast Processing</span>
+                <span className="text-gray-700 text-sm ml-2"> - No restrictions or limits</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowFundingForm(!showFundingForm)}
+              disabled={fundings?.some(f => f.status === 'requested' || f.status === 'under_review')}
+              className={`px-8 py-4 text-lg ${
+                fundings?.some(f => f.status === 'requested' || f.status === 'under_review')
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-black hover:bg-gray-800 shadow-xl'
+              } text-white rounded-xl font-bold transition-all duration-300 hover:scale-105`}
+            >
+              {showFundingForm ? "Cancel Request" : "Start Funding Request Now"}
+            </button>
+          </div>
+          <div className="md:w-1/3 mt-6 md:mt-0">
+            <Lottie
+              animationData={walletAnimation}
+              loop={true}
+              autoplay={true}
+              style={{ width: '100%', height: 200 }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   // Funding Requests Tab Content
   const renderFundingRequests = () => (
@@ -266,8 +314,8 @@ const FundingRequestsCard = () => {
                     placeholder="Enter amount in SYP"
                     required
                     min="1"
-                    step="1000"
                   />
+                  <p className="text-sm text-green-600 mt-2">💡 No restrictions - Request any amount you need</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -275,7 +323,7 @@ const FundingRequestsCard = () => {
                   </label>
                   <div className="px-4 py-3 bg-orange-50 rounded-lg border border-orange-200">
                     <div className="font-semibold text-gray-800">{idea_title}</div>
-                    <div className="text-sm text-gray-600 mt-1">الفكرة #{ideaId}</div>
+                    <div className="text-sm text-gray-600 mt-1">Idea #{ideaId}</div>
                   </div>
                 </div>
               </div>
@@ -356,7 +404,7 @@ const FundingRequestsCard = () => {
           <div className="p-8 text-center">
             <div className="text-gray-600 text-lg mb-6">
               {fundings?.some(f => f.status === 'requested' || f.status === 'under_review')
-                ? 'لديك طلب تمويل قيد المراجعة حالياً.'
+                ? 'You have a funding request under review currently.'
                 : 'Ready to take your project to the next level? Apply for funding now.'}
             </div>
             {fundingRequirements && (
@@ -387,21 +435,21 @@ const FundingRequestsCard = () => {
             fundings.map((funding) => (
               <div key={funding.funding_id} className="flex items-center justify-between p-6 border border-green-200 rounded-lg hover:bg-green-50 transition-all duration-200">
                 <div>
-                  <div className="font-semibold text-gray-800 text-lg">طلب التمويل #{funding.funding_id}</div>
+                  <div className="font-semibold text-gray-800 text-lg">Funding Request #{funding.funding_id}</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    المبلغ المطلوب: {funding.requested_amount?.toLocaleString()} SYP
+                    Requested Amount: {funding.requested_amount?.toLocaleString()} SYP
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    الحالة: <span className={`font-medium ${
+                    Status: <span className={`font-medium ${
                       funding.status === 'approved' ? 'text-green-600' :
                       funding.status === 'rejected' ? 'text-red-600' :
                       funding.status === 'cancelled' ? 'text-gray-600' :
                       'text-orange-600'
                     }`}>
-                      {funding.status === 'approved' ? 'موافق عليه' :
-                       funding.status === 'rejected' ? 'مرفوض' :
-                       funding.status === 'cancelled' ? 'ملغى' :
-                       funding.status === 'under_review' ? 'قيد المراجعة' :
+                      {funding.status === 'approved' ? 'Approved' :
+                       funding.status === 'rejected' ? 'Rejected' :
+                       funding.status === 'cancelled' ? 'Cancelled' :
+                       funding.status === 'under_review' ? 'Under Review' :
                        funding.status}
                     </span>
                   </div>
@@ -412,7 +460,7 @@ const FundingRequestsCard = () => {
                       onClick={() => openCancelModal(funding.funding_id)}
                       className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                     >
-                      إلغاء الطلب
+                      Cancel Request
                     </button>
                   ) : null}
                   <div className="text-right">
@@ -421,14 +469,14 @@ const FundingRequestsCard = () => {
                         <div className="font-semibold text-lg text-green-700">
                           {funding.approved_amount.toLocaleString()} SYP
                         </div>
-                        <div className="text-sm text-gray-600">المبلغ المعتمد</div>
+                        <div className="text-sm text-gray-600">Approved Amount</div>
                       </>
                     ) : (
                       <>
                         <div className="font-semibold text-lg text-orange-700">
                           {funding.requested_amount?.toLocaleString()} SYP
                         </div>
-                        <div className="text-sm text-gray-600">المبلغ المطلوب</div>
+                        <div className="text-sm text-gray-600">Requested Amount</div>
                       </>
                     )}
                   </div>
@@ -437,7 +485,7 @@ const FundingRequestsCard = () => {
             ))
           ) : (
             <div className="text-center py-8 text-gray-600">
-              لا توجد طلبات تمويل حالياً
+              No funding requests currently
             </div>
           )}
         </div>
@@ -447,7 +495,7 @@ const FundingRequestsCard = () => {
 
   // Checks Tab Content
   const renderChecks = () => {
-    // عرض التمويلات المعتمدة فقط
+    // Show only approved fundings
     const approvedFundings = fundings?.filter(f => f.status === 'approved') || [];
     
     return (
@@ -463,7 +511,7 @@ const FundingRequestsCard = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold">CHECK NO: {funding.funding_id}</div>
-                    <div className="text-sm text-orange-300">Date: {funding.transfer_date || 'قيد الانتظار'}</div>
+                    <div className="text-sm text-orange-300">Date: {funding.transfer_date || 'Pending'}</div>
                   </div>
                 </div>
               </div>
@@ -500,10 +548,10 @@ const FundingRequestsCard = () => {
                 <div className="border-b-2 border-dashed border-orange-300 pb-8 mb-8">
                   <div className="text-sm text-gray-600 mb-3">PAY TO THE ORDER OF</div>
                   <div className="text-3xl font-bold text-gray-800 tracking-tight">
-                    {funding.investor?.name || 'المستثمر'}
+                    {funding.investor?.name || 'Investor'}
                   </div>
                   <div className="text-gray-600 text-lg mt-2">
-                    {funding.investor?.email || 'البريد الإلكتروني'}
+                    {funding.investor?.email || 'Email'}
                   </div>
                 </div>
 
@@ -517,7 +565,7 @@ const FundingRequestsCard = () => {
                   <div>
                     <div className="text-sm text-gray-600 mb-2">STATUS</div>
                     <div className="px-6 py-3 rounded-lg text-lg font-bold bg-green-100 text-green-800 border border-green-300">
-                      {funding.status === 'approved' ? 'موافق عليه' : funding.status}
+                      {funding.status === 'approved' ? 'Approved' : funding.status}
                     </div>
                   </div>
                 </div>
@@ -533,7 +581,7 @@ const FundingRequestsCard = () => {
                     <div>
                       <div className="text-gray-600 mb-1">Payment Method</div>
                       <div className="font-semibold text-lg text-gray-800">
-                        {funding.payment_method || 'سيتم تحديده'}
+                        {funding.payment_method || 'To be determined'}
                       </div>
                     </div>
                   </div>
@@ -541,7 +589,7 @@ const FundingRequestsCard = () => {
                     <div>
                       <div className="text-gray-600 mb-1">Committee</div>
                       <div className="font-semibold text-lg text-gray-800">
-                        {funding.committee?.name || 'اللجنة'}
+                        {funding.committee?.name || 'Committee'}
                       </div>
                     </div>
                     <div>
@@ -573,19 +621,19 @@ const FundingRequestsCard = () => {
                     <div>
                       <div className="text-orange-300">Meeting Date</div>
                       <div className="font-semibold text-white text-base">
-                        {funding.meeting?.meeting_date || 'لم يتم تحديده'}
+                        {funding.meeting?.meeting_date || 'Not scheduled'}
                       </div>
                     </div>
                     <div>
                       <div className="text-orange-300">Committee Notes</div>
                       <div className="font-semibold text-white text-base">
-                        {funding.committee_notes || 'لا توجد ملاحظات'}
+                        {funding.committee_notes || 'No notes'}
                       </div>
                     </div>
                     <div>
                       <div className="text-orange-300">Transfer Date</div>
                       <div className="font-semibold text-green-400 text-base">
-                        {funding.transfer_date || 'قيد الانتظار'}
+                        {funding.transfer_date || 'Pending'}
                       </div>
                     </div>
                   </div>
@@ -595,9 +643,9 @@ const FundingRequestsCard = () => {
           ))
         ) : (
           <div className="text-center py-12">
-            <div className="text-gray-600 text-lg mb-4">لا توجد تمويلات معتمدة حتى الآن</div>
+            <div className="text-gray-600 text-lg mb-4">No approved fundings yet</div>
             <p className="text-gray-500">
-              سيظهر هنا التمويلات التي تمت الموافقة عليها
+              Approved fundings will appear here
             </p>
           </div>
         )}
@@ -610,21 +658,8 @@ const FundingRequestsCard = () => {
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-orange-50 py-8 px-4">
         <div className="max-w-6xl mx-auto">
           
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">إدارة التمويل</h1>
-            <div className="flex items-center justify-between">
-              <p className="text-gray-600">
-                الفكرة: <span className="font-semibold text-green-700">{idea_title}</span>
-              </p>
-              <button
-                onClick={() => navigate(`/ideas/${ideaId}`)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                العودة للفكرة
-              </button>
-            </div>
-          </div>
+          {/* Header with Animation */}
+          {renderHeader()}
           
           {/* Tabs Navigation */}
           <div className="bg-white rounded-2xl shadow-lg mb-8 border border-gray-200">
@@ -637,7 +672,7 @@ const FundingRequestsCard = () => {
                     : "text-gray-600 hover:text-green-600 hover:bg-green-50"
                 }`}
               >
-                طلبات التمويل
+                Funding Requests
               </button>
               <button
                 onClick={() => setActiveTab("checks")}
@@ -647,7 +682,7 @@ const FundingRequestsCard = () => {
                     : "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
                 }`}
               >
-                التمويلات المعتمدة
+                Approved Fundings
               </button>
             </div>
           </div>
@@ -663,16 +698,16 @@ const FundingRequestsCard = () => {
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">إلغاء طلب التمويل</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Cancel Funding Request</h3>
             <p className="text-gray-600 mb-6">
-              هل أنت متأكد من إلغاء طلب التمويل؟ يمكنك كتابة سبب الإلغاء (اختياري).
+              Are you sure you want to cancel this funding request? You can write a reason (optional).
             </p>
             <textarea
               value={cancellationData.cancellation_reason}
               onChange={handleCancelReasonChange}
               rows="3"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-6"
-              placeholder="سبب الإلغاء (اختياري)..."
+              placeholder="Cancellation reason (optional)..."
               maxLength="500"
             />
             <div className="flex justify-end gap-4">
@@ -684,7 +719,7 @@ const FundingRequestsCard = () => {
                 }}
                 className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                إلغاء
+                Cancel
               </button>
               <button
                 onClick={handleCancelFunding}
@@ -693,7 +728,7 @@ const FundingRequestsCard = () => {
                   isCancelling ? 'bg-gray-400' : 'bg-red-600 hover:bg-red-700'
                 } text-white rounded-lg`}
               >
-                {isCancelling ? 'جاري الإلغاء...' : 'تأكيد الإلغاء'}
+                {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
               </button>
             </div>
           </div>

@@ -1,12 +1,14 @@
 // src/components/Welcome.jsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const { ideaId } = useParams(); // الحصول على ideaId من URL
 
   const handleStart = () => {
-    navigate('/business-model');
+    // الانتقال إلى صفحة Business Model Canvas مع ideaId
+    navigate(`/ideas/${ideaId}/business-model`);
   };
 
   return (
@@ -42,6 +44,12 @@ const Welcome = () => {
           <p className="text-lg text-white mb-8 max-w-md mx-auto">
             Build your business model step by step with our comprehensive canvas tool
           </p>
+          {/* إظهار ideaId إذا كان موجوداً */}
+          {ideaId && (
+            <p className="text-lg text-orange-300 mb-4">
+              Working on Idea: <span className="font-bold">#{ideaId}</span>
+            </p>
+          )}
         </div>
         
         <button 

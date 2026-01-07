@@ -1,4 +1,4 @@
-// src/components/GanttChart/TimelineHeader.jsx
+
 import React from 'react';
 import { LIST_COLUMN_WIDTH } from '../../utils/ganttUtils';
 

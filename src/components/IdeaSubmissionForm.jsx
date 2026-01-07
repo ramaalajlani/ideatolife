@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ React Router
+import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import CreativeIdea from '../assets/animations/Creative Idea.json';
-import ideaService from "../services/ideaService"; // تأكد من اسم الملف الصحيح
+import ideaService from "../services/ideaService";
 
 const IdeaSubmissionForm = () => {
-  const navigate = useNavigate(); // ✅ استخدام navigate
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -38,9 +38,10 @@ const IdeaSubmissionForm = () => {
     setSuccessMessage(null);
     try {
       const result = await ideaService.addIdea(formData);
+
       setSuccessMessage(result.message || "Idea submitted successfully!");
 
-      // إعادة تهيئة الفورم
+      // إعادة تعيين النموذج
       setFormData({
         title: "",
         description: "",
@@ -51,40 +52,46 @@ const IdeaSubmissionForm = () => {
         termsAccepted: false
       });
 
-      // ✅ بعد نجاح الإرسال، التوجيه لصفحة /timeline
-      navigate("/timeline");
+      // الانتقال مباشرةً إلى Roadmap للفكرة الجديدة
+      if (result.idea && result.idea.id) {
+        navigate(`/ideas/${result.idea.id}/roadmap`);
+      }
 
     } catch (err) {
-      setErrorMessage(err.message || "Failed to submit idea");
+      setErrorMessage(err.response?.data?.message || err.message || "Failed to submit idea");
     } finally {
       setLoading(false);
     }
   };
 
   const renderField = (field) => {
-    const commonClasses = "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-300 focus:border-transparent transition-all duration-300 bg-white/80";
+    const commonClasses = "w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-400 transition-all duration-300 bg-white placeholder-gray-500 text-gray-800";
     if (field.type === "textarea") {
-      return <textarea
+      return (
+        <textarea
+          id={field.id}
+          name={field.id}
+          rows={field.rows}
+          value={formData[field.id]}
+          onChange={handleInputChange}
+          placeholder={field.placeholder}
+          className={`${commonClasses} resize-none`}
+          required
+        />
+      );
+    }
+    return (
+      <input
+        type={field.type}
         id={field.id}
         name={field.id}
-        rows={field.rows}
         value={formData[field.id]}
         onChange={handleInputChange}
         placeholder={field.placeholder}
-        className={`${commonClasses} resize-none`}
+        className={commonClasses}
         required
-      />;
-    }
-    return <input
-      type={field.type}
-      id={field.id}
-      name={field.id}
-      value={formData[field.id]}
-      onChange={handleInputChange}
-      placeholder={field.placeholder}
-      className={commonClasses}
-      required
-    />;
+      />
+    );
   };
 
   const fields = [
@@ -97,55 +104,72 @@ const IdeaSubmissionForm = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-purple-100 py-12 px-4">
-      <div className="max-w-7xl mx-auto bg-white/95 rounded-3xl shadow-xl overflow-hidden border border-white/50 grid grid-cols-1 lg:grid-cols-2 min-h-[90vh]">
+    <div className="min-h-screen w-full bg-gradient-to-br from-orange-50 via-pink-50 to-purple-100 m-0 p-0">
+      <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2">
 
-        <div className="bg-gradient-to-br from-orange-200 via-pink-200 to-purple-300 text-gray-800 p-10 lg:p-16 flex flex-col justify-start relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/30"></div>
-          <div className="relative z-10 text-center lg:text-left">
-            <div className="mb-4 lg:mb-6 flex justify-center lg:justify-start">
-              <div className="w-80 h-80 lg:w-96 lg:h-96">
-                <Lottie animationData={CreativeIdea} loop className="w-full h-full" />
-              </div>
-            </div>
+        {/* القسم الأيسر مع الأنيميشن والتعليمات */}
+        <div className="w-full h-full flex flex-col justify-center items-center bg-[#FFE2AF] p-8 space-y-8">
+          <div className="w-80 h-80 lg:w-96 lg:h-96">
+            <Lottie animationData={CreativeIdea} loop className="w-full h-full" />
+          </div>
+          <div className="text-center lg:text-left max-w-xs text-gray-700">
+            <h2 className="text-2xl font-bold mb-4">Instructions</h2>
+            <p className="mb-2">1. Be clear and concise about your idea.</p>
+            <p className="mb-2">2. Explain the problem your idea solves.</p>
+            <p className="mb-2">3. Describe your proposed solution.</p>
+            <p className="mb-2">4. Indicate the target audience.</p>
+            <p>5. Add any additional notes if necessary.</p>
           </div>
         </div>
 
-        <div className="p-10 lg:p-16 bg-white">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">Submit Your Idea</h1>
+        {/* القسم الأيمن للنموذج */}
+        <div className="w-full h-full flex flex-col justify-center items-center p-10 lg:p-16 bg-[#FFF8F0]">
+          <div className="w-full max-w-xl">
+            <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center lg:text-left">Submit Your Idea</h1>
 
-          {successMessage && <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl">{successMessage}</div>}
-          {errorMessage && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">{errorMessage}</div>}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {fields.map(f => (
-              <div key={f.id} className="space-y-2">
-                <label htmlFor={f.id} className="block text-gray-700 font-semibold">{f.label}</label>
-                {renderField(f)}
+            {successMessage && (
+              <div className="mb-6 bg-green-50 text-green-800 px-6 py-4 rounded-xl shadow">
+                {successMessage}
               </div>
-            ))}
+            )}
+            {errorMessage && (
+              <div className="mb-6 bg-red-50 text-red-800 px-6 py-4 rounded-xl shadow">
+                {errorMessage}
+              </div>
+            )}
 
-            <div className="flex items-start space-x-3 bg-orange-50 rounded-xl p-4 border border-orange-100">
-              <input
-                type="checkbox"
-                id="termsAccepted"
-                name="termsAccepted"
-                checked={formData.termsAccepted}
-                onChange={handleInputChange}
-                className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-400 mt-1 flex-shrink-0"
-                required
-              />
-              <label htmlFor="termsAccepted" className="text-gray-700">I agree to the terms and conditions.</label>
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {fields.map(f => (
+                <div key={f.id} className="space-y-2">
+                  <label htmlFor={f.id} className="block text-gray-700 font-semibold">{f.label}</label>
+                  {renderField(f)}
+                </div>
+              ))}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full bg-gradient-to-r from-orange-400 to-purple-500 text-white py-3 rounded-xl font-semibold ${loading ? "opacity-70 cursor-not-allowed" : "hover:scale-105 transition-transform"}`}
-            >
-              {loading ? "Submitting..." : "Submit Idea"}
-            </button>
-          </form>
+              <div className="flex items-start space-x-3 p-4">
+                <input
+                  type="checkbox"
+                  id="termsAccepted"
+                  name="termsAccepted"
+                  checked={formData.termsAccepted}
+                  onChange={handleInputChange}
+                  className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-400 mt-1 flex-shrink-0"
+                  required
+                />
+                <label htmlFor="termsAccepted" className="text-gray-700 leading-relaxed">
+                  I agree to the terms and conditions.
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="relative group bg-gradient-to-r from-orange-500 to-red-700 py-5 px-12 rounded-full text-white font-bold text-lg transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/20 transform hover:scale-105 w-full text-center"
+              >
+                {loading ? "Submitting..." : "Send Your Idea"}
+              </button>
+            </form>
+          </div>
         </div>
 
       </div>

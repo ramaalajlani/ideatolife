@@ -1,17 +1,32 @@
 // src/components/common/LoadingSpinner.jsx
 import React from 'react';
+import { CircularProgress, Box, Typography } from '@mui/material';
 
-const LoadingSpinner = ({ message = 'جاري التحميل...' }) => {
+const LoadingSpinner = ({ message = 'جاري التحميل...', size = 40, thickness = 3.6 }) => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px]">
-      <div className="relative">
-        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 bg-blue-600 rounded-full animate-ping opacity-75"></div>
-        </div>
-      </div>
-      <p className="mt-4 text-gray-600 text-lg font-medium">{message}</p>
-    </div>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '200px',
+        gap: 2
+      }}
+    >
+      <CircularProgress 
+        size={size} 
+        thickness={thickness}
+        sx={{ color: 'primary.main' }}
+      />
+      <Typography 
+        variant="body1" 
+        color="textSecondary"
+        sx={{ mt: 2 }}
+      >
+        {message}
+      </Typography>
+    </Box>
   );
 };
 

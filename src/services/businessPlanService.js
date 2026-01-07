@@ -1,76 +1,53 @@
-import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
-
+import api from "./api";
 const businessPlanService = {
-  // حفظ أو تحديث خطة العمل
-  saveBusinessPlan: async (ideaId, businessPlanData) => {
-    try {
-      console.log('Saving business plan data:', { ideaId, businessPlanData });
-      
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/ideas/${ideaId}/business-plan`,
-        businessPlanData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          }
-        }
-      );
-      
-      console.log('Save response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error saving business plan:', error);
-      throw error.response?.data || { message: 'فشل في حفظ خطة العمل' };
-    }
-  },
-
-  // جلب خطة العمل الحالية
   getBusinessPlan: async (ideaId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/ideas/${ideaId}/business-plan`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          }
-        }
-      );
-      
-      console.log('Get business plan response:', response.data);
+      const response = await api.get(`/idea/${ideaId}/bmc`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching business plan:', error);
-      throw error.response?.data || { message: 'فشل في جلب خطة العمل' };
+      console.error("Error fetching business plan:", error);
+
+      if (error.response?.status === 404 || error.response?.status === 405) {
+   
+        return null;
+      }
+
+      throw error.response?.data || { message: "فشل في جلب خطة العمل" };
     }
   },
 
-  // التحقق من أهلية الفكرة لخطة العمل
-  checkEligibility: async (ideaId) => {
+  saveBusinessPlan: async (ideaId, businessPlanData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/ideas/${ideaId}/eligibility`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          }
-        }
-      );
+      const response = await api.post(`/ideas/${ideaId}/business-plan`, businessPlanData);
       return response.data;
     } catch (error) {
-      console.log('Eligibility check not available:', error);
+      console.error("Error saving business plan:", error);
+      throw error.response?.data || { message: "فشل في حفظ خطة العمل" };
+    }
+  },
+
+  updateBusinessPlan: async (ideaId, businessPlanData) => {
+    try {
+      const response = await api.post(`/ideas/${ideaId}/update-bmc`, businessPlanData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating business plan:", error);
+      throw error.response?.data || { message: "فشل في تحديث خطة العمل" };
+    }
+  },
+
+  checkEligibility: async (ideaId) => {
+    try {
+      const response = await api.get(`/ideas/${ideaId}/eligibility`);
+      return response.data;
+    } catch (error) {
+      console.log("Eligibility check not available:", error);
+      // قيمة افتراضية إذا لم يكن الـ endpoint متاح
       return {
         eligible: true,
         score: 85,
-        message: 'يمكنك البدء في ملء خطة العمل'
+        message: "يمكنك البدء في ملء خطة العمل"
       };
     }
   }

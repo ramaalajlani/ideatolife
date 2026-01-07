@@ -1,114 +1,68 @@
-import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+import api from "./api";
+
 const ganttService = {
-
   getPhases: async (ideaId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/gantt-charts/${ideaId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
+      const response = await api.get(`/gantt-charts/${ideaId}`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching Gantt phases:', error);
-      throw error.response?.data || { message: 'فشل في جلب المراحل' };
+      console.error("Error fetching Gantt phases:", error);
+      throw error.response?.data || { message: "فشل في جلب المراحل" };
     }
   },
 
   submitFullTimeline: async (ideaId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/ideas/${ideaId}/submit-timeline`,
-        {}, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        }
-      );
+      const response = await api.post(`/ideas/${ideaId}/submit-timeline`);
       return response.data;
-    } catch (err) {
-      console.error('Error submitting timeline:', err);
-      throw err.response?.data || { message: 'فشل في إرسال الجدول الزمني' };
+    } catch (error) {
+      console.error("Error submitting timeline:", error);
+      throw error.response?.data || { message: "فشل في إرسال الجدول الزمني" };
     }
   },
 
   createPhase: async (ideaId, phaseData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/gantt-charts/${ideaId}`, phaseData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await api.post(`/gantt-charts/${ideaId}`, phaseData);
       return response.data;
     } catch (error) {
-      console.error('Error creating Gantt phase:', error);
-      throw error.response?.data || { message: 'فشل في إنشاء المرحلة' };
+      console.error("Error creating Gantt phase:", error);
+      throw error.response?.data || { message: "فشل في إنشاء المرحلة" };
     }
   },
 
   updatePhase: async (phaseId, phaseData) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(`${API_URL}/gantt-charts/${phaseId}`, phaseData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await api.put(`/gantt-charts/${phaseId}`, phaseData);
       return response.data;
     } catch (error) {
-      console.error('Error updating Gantt phase:', error);
-      throw error.response?.data || { message: 'فشل في تحديث المرحلة' };
+      console.error("Error updating Gantt phase:", error);
+      throw error.response?.data || { message: "فشل في تحديث المرحلة" };
     }
   },
 
   deletePhase: async (phaseId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(`${API_URL}/gantt-charts/${phaseId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
+      const response = await api.delete(`/gantt-charts/${phaseId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting Gantt phase:', error);
-      throw error.response?.data || { message: 'فشل في حذف المرحلة' };
+      console.error("Error deleting Gantt phase:", error);
+      throw error.response?.data || { message: "فشل في حذف المرحلة" };
     }
   },
 
   getPhaseEvaluation: async (ideaId, ganttId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/ideas/${ideaId}/gantt/${ganttId}/evaluation`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        }
+      const response = await api.get(
+        `/ideas/${ideaId}/gantt/${ganttId}/evaluation`
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching phase evaluation:', error);
-
+      console.error("Error fetching phase evaluation:", error);
       return null;
     }
-  }
+  },
 };
 
 export default ganttService;

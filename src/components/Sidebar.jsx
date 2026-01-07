@@ -10,6 +10,7 @@ import {
   Home
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import profileService from '../services/profileService'; // تأكد من المسار الصحيح
 
 const SidebarContext = createContext();
 
@@ -18,6 +19,13 @@ export default function Sidebar({ children, activeItem = 'home' }) {
     const saved = localStorage.getItem('sidebar_expanded');
     return saved ? JSON.parse(saved) : true;
   });
+  
+  const [userData, setUserData] = useState(() => {
+    const saved = localStorage.getItem('userData');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [loading, setLoading] = useState(!userData);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,7 +33,43 @@ export default function Sidebar({ children, activeItem = 'home' }) {
     localStorage.setItem('sidebar_expanded', JSON.stringify(expanded));
   }, [expanded]);
 
-  // استخراج معرف الفكرة من المسار
+  // جلب بيانات المستخدم عند تحميل المكون
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        if (!userData) {
+          setLoading(true);
+          const response = await profileService.getProfile();
+          
+          const userProfile = {
+            name: response.idea_owner?.name || "المستخدم",
+            email: response.idea_owner?.email || "",
+            profile_image: response.idea_owner?.profile_image || null,
+            role: response.idea_owner?.role || "صاحب فكرة",
+            phone: response.idea_owner?.phone || ""
+          };
+          
+          setUserData(userProfile);
+          localStorage.setItem('userData', JSON.stringify(userProfile));
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        const defaultUser = {
+          name: "المستخدم",
+          email: "",
+          profile_image: null,
+          role: "صاحب فكرة",
+          phone: ""
+        };
+        setUserData(defaultUser);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userData]);
+
   const getIdeaIdFromPath = () => {
     const path = location.pathname;
     const ideaMatch = path.match(/\/ideas\/(\d+)/);
@@ -35,16 +79,45 @@ export default function Sidebar({ children, activeItem = 'home' }) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('userData');
     localStorage.removeItem('sidebar_expanded');
     navigate('/');
+  };
+
+  const updateUserData = (updatedData) => {
+    const newData = { ...userData, ...updatedData };
+    setUserData(newData);
+    localStorage.setItem('userData', JSON.stringify(newData));
   };
 
   return (
     <div className={`fixed left-0 top-0 h-screen bg-gray-900 border-r border-gray-700 shadow-lg transition-all duration-300 z-50 ${
       expanded ? 'w-64' : 'w-20'
     }`}>
+      
+      {/* اللوغو أعلى الـ Sidebar */}
+      <div 
+        className="flex flex-col items-start cursor-pointer select-none p-4 border-b border-gray-700"
+        onClick={() => navigate("/")}
+      >
+        {expanded ? (
+          <>
+            <span className="text-3xl font-black text-[#f87115] tracking-[ -0.05em] leading-[0.8]">
+              Idea
+            </span>
+            <div className="bg-[#f87115] px-1.5 py-0.5 rounded-[2px] mt-0.5 ml-5">
+              <span className="text-white text-lg font-black tracking-tighter leading-none">
+                2Life
+              </span>
+            </div>
+          </>
+        ) : (
+          <span className="text-2xl font-black text-[#f87115]">I2</span> // اختصار اللوغو عند الطي
+        )}
+      </div>
+
+      {/* زر توسيع/طي القائمة */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
-   
         <button
           onClick={() => setExpanded(!expanded)}
           className="p-2 rounded-lg hover:bg-orange-500 transition-colors text-gray-300 hover:text-white"
@@ -55,26 +128,65 @@ export default function Sidebar({ children, activeItem = 'home' }) {
       </div>
       
       <div className="overflow-y-auto h-[calc(100vh-120px)] scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-        <SidebarContext.Provider value={{ expanded, activeItem, ideaId: getIdeaIdFromPath() }}>
+        <SidebarContext.Provider value={{ 
+          expanded, 
+          activeItem, 
+          ideaId: getIdeaIdFromPath(),
+          userData,
+          updateUserData 
+        }}>
           <ul className="flex flex-col py-4 space-y-2 px-3">
             {children}
           </ul>
         </SidebarContext.Provider>
       </div>
       
+      {/* قسم معلومات المستخدم */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-900 p-4">
         <div className={`flex items-center ${expanded ? 'justify-between' : 'justify-center'}`}>
           <div className={`flex items-center ${expanded ? 'w-full' : ''}`}>
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-md">
-              <User size={16} className="text-white" />
-            </div>
-            {expanded && (
-              <div className="ml-3 flex-1 overflow-hidden">
-                <div className="text-sm font-semibold text-white truncate">المستخدم</div>
-                <div className="text-xs text-gray-400 truncate">صاحب فكرة</div>
+            {loading ? (
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gray-700 rounded-full animate-pulse"></div>
+                {expanded && (
+                  <div className="ml-3 flex-1">
+                    <div className="h-4 bg-gray-700 rounded w-24 animate-pulse"></div>
+                    <div className="h-3 bg-gray-700 rounded w-16 mt-1 animate-pulse"></div>
+                  </div>
+                )}
               </div>
+            ) : (
+              <>
+                {userData?.profile_image ? (
+                  <img 
+                    src={`http://127.0.0.1:8000${userData.profile_image}`} 
+                    alt={userData.name}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-orange-500"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-md">
+                    <User size={16} className="text-white" />
+                  </div>
+                )}
+                
+                {expanded && (
+                  <div className="ml-3 flex-1 overflow-hidden">
+                    <div className="text-sm font-semibold text-white truncate">
+                      {userData?.name || "المستخدم"}
+                    </div>
+                    <div className="text-xs text-gray-400 truncate">
+                      {userData?.role || "صاحب فكرة"}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
+          
           {expanded && (
             <button 
               onClick={handleLogout}
@@ -91,6 +203,7 @@ export default function Sidebar({ children, activeItem = 'home' }) {
   );
 }
 
+// بقية SidebarItem و SidebarItemsList كما هي بدون أي تغييرات
 export function SidebarItem({ icon, text, name, active, alert, badge, onClick, ideaId }) {
   const { expanded } = useContext(SidebarContext);
 
@@ -155,7 +268,6 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
   const { ideaId: contextIdeaId } = useContext(SidebarContext);
   const navigate = useNavigate();
   
-  // استخدام معرف الفكرة من السياق أو الـ prop
   const targetIdeaId = currentIdeaId || contextIdeaId;
 
   const handleItemClick = (name, specificIdeaId = null) => {
@@ -208,7 +320,6 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
         active={activeItem === 'reports'}
         onClick={handleItemClick}
         ideaId={targetIdeaId}
-
       />
       
       <SidebarItem 
@@ -218,7 +329,6 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
         active={activeItem === 'meetings'}
         onClick={handleItemClick}
         ideaId={targetIdeaId}
-
         alert={true}
       />
     </>

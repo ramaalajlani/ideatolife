@@ -1,297 +1,298 @@
 // src/pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/FundingRequestsTab.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import axios from "axios";
+import { CheckCircle, Clock, XCircle, DollarSign, FileText, Eye, X } from "lucide-react";
 
-const FundingRequestsTab = () => {
-  const [fundings, setFundings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData, isLoading }) => {
   const [selectedFunding, setSelectedFunding] = useState(null);
-  const [evaluation, setEvaluation] = useState({
-    is_approved: false,
-    approved_amount: "",
-    committee_notes: "",
-  });
+  const [isApproved, setIsApproved] = useState(true);
+  const [approvedAmount, setApprovedAmount] = useState("");
+  const [committeeNotes, setCommitteeNotes] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
-
-  useEffect(() => {
-    const fetchFundings = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/committee/fundings", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-
-        if (res.ok && data.funding_requests) {
-          setFundings(data.funding_requests);
-        } else {
-          setMessage(data.message || "لا توجد طلبات تمويل حالياً.");
-        }
-      } catch (err) {
-        console.error(err);
-        setMessage("حدث خطأ أثناء جلب طلبات التمويل.");
-      } finally {
-        setLoading(false);
-      }
+  // Get status badge with support for Funding type or Task/Phase
+  const localGetStatusBadge = getStatusBadge || ((status, type) => {
+    const base = "px-3 py-1 rounded-full text-sm font-medium ";
+    
+    const mappingNormal = {
+      pending: "bg-orange-50 text-orange-600",
+      approved: "bg-emerald-50 text-emerald-600",
+      rejected: "bg-red-50 text-red-600",
     };
 
-    if (token) fetchFundings();
-  }, [token]);
+    const mappingTask = {
+      pending: "bg-blue-50 text-blue-600",
+      approved: "bg-indigo-50 text-indigo-600",
+      rejected: "bg-rose-50 text-rose-600",
+    };
 
-  const handleEvaluate = async (id) => {
+    if (type === "task" || type === "phase") {
+      return base + (mappingTask[status] || "bg-gray-50 text-gray-600");
+    }
+
+    return base + (mappingNormal[status] || "bg-gray-50 text-gray-600");
+  });
+
+  const handleEvaluateClick = (funding) => {
+    setSelectedFunding(funding);
+    setApprovedAmount(funding.requested_amount || "");
+    setIsApproved(true);
+    setCommitteeNotes("");
+  };
+
+  const submitEvaluation = async () => {
+    if (!selectedFunding) return;
+    const token = localStorage.getItem("committee_token");
+    setLoading(true);
+
+    const url =
+      selectedFunding.type === "funding"
+        ? `http://127.0.0.1:8000/api/fundings/${selectedFunding.funding_id}/evaluate`
+        : `http://127.0.0.1:8000/api/funding/${selectedFunding.funding_id}/evaluate/gantt/task`;
+
     try {
-      const requestData = {
-        is_approved: evaluation.is_approved,
-        approved_amount: evaluation.approved_amount || 0,
-        committee_notes: evaluation.committee_notes || "",
-      };
-      
-      const res = await fetch(`http://127.0.0.1:8000/api/fundings/${id}/evaluate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      await axios.post(
+        url,
+        {
+          is_approved: isApproved,
+          approved_amount: approvedAmount,
+          committee_notes: committeeNotes,
         },
-        body: JSON.stringify(requestData),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("✅ تم تقييم طلب التمويل بنجاح!");
-        setSelectedFunding(null);
-        // Refresh list
-        const updatedRes = await fetch("http://127.0.0.1:8000/api/committee/fundings", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const updatedData = await updatedRes.json();
-        if (updatedRes.ok) setFundings(updatedData.funding_requests || []);
-      } else {
-        alert(`❌ فشل التقييم: ${data.message || "حدث خطأ ما"}`);
-      }
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("✅ Evaluation submitted successfully!");
+      setSelectedFunding(null);
+      if (typeof refreshData === "function") refreshData();
     } catch (err) {
-      console.error("Error evaluating funding:", err);
-      alert("⚠️ حدث خطأ في الاتصال بالخادم.");
+      console.error(err);
+      alert(err.response?.data?.message || "❌ Failed to submit evaluation");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleOpenEvaluation = (funding) => {
-    setSelectedFunding(funding);
-    setEvaluation({
-      is_approved: false,
-      approved_amount: funding.requested_amount || "",
-      committee_notes: "",
-    });
-  };
-
-  const getStatusText = (status) => {
-    const statusMap = {
-      under_review: { text: "قيد المراجعة", color: "bg-yellow-100 text-yellow-800" },
-      approved: { text: "موافقة", color: "bg-green-100 text-green-800" },
-      funded: { text: "ممول", color: "bg-emerald-100 text-emerald-800" },
-      rejected: { text: "مرفوض", color: "bg-red-100 text-red-800" }
-    };
-    return statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" };
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-gray-600">⏳ جاري تحميل طلبات التمويل...</div>
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-600"></div>
+        <p className="text-gray-500 font-medium">Loading Funding Requests...</p>
+      </div>
+    );
+  }
+
+  if (!fundingRequests || fundingRequests.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-dashed border-gray-200 py-24 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <DollarSign className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-base font-medium text-gray-400">No Funding Requests</h3>
+        <p className="text-gray-400 text-sm mt-2">No funding requests available for evaluation</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">طلبات التمويل الواردة</h2>
-            <p className="text-gray-600">مراجعة وتقييم طلبات التمويل المقدمة للجنة</p>
-          </div>
-          <span className="text-3xl">💰</span>
+      {/* Tab Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Funding Requests Evaluation</h2>
+          <p className="text-gray-500 text-sm mt-1">
+            {fundingRequests.length} funding requests awaiting assessment
+          </p>
         </div>
       </div>
 
-      {message && (
-        <div className="bg-blue-50 text-blue-800 p-4 rounded-lg">
-          {message}
-        </div>
-      )}
-
-      {fundings.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">الفكرة</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">صاحب الفكرة</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">المرحلة</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">المهمة</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">المبلغ المطلوب</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">المبرر</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">الحالة</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">تاريخ الإرسال</th>
-                  <th className="py-3 px-6 text-right text-sm font-medium text-gray-700">الإجراء</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {fundings.map((f, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-gray-900">{f.idea?.title || "—"}</div>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600">
-                      {f.idea_owner?.user?.name || "—"}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600">
-                      {f.gantt_name || "—"}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600">
-                      {f.task_name || "—"}
-                    </td>
-                    <td className="py-4 px-6 font-medium text-gray-900">
-                      {f.requested_amount} $
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-sm text-gray-600 max-w-xs truncate">
-                        {f.justification || "—"}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusText(f.status).color}`}>
-                        {getStatusText(f.status).text}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project Title</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Date</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {fundingRequests.map((request) => (
+              <tr key={request.funding_id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3 text-sm text-gray-600 font-medium">{request.funding_id}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">{request.idea?.title || "N/A"}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600">
+                        {request.idea?.owner?.name?.charAt(0) || "U"}
                       </span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-600">
-                      {new Date(f.created_at).toLocaleDateString('ar-SA')}
-                    </td>
-                    <td className="py-4 px-6">
-                      <button
-                        onClick={() => handleOpenEvaluation(f)}
-                        className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium text-sm transition-colors"
-                      >
-                        تقييم
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <div className="text-5xl mb-4">💰</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد طلبات تمويل</h3>
-          <p className="text-gray-600">لم يتم تقديم أي طلبات تمويل حتى الآن</p>
-        </div>
-      )}
+                    </div>
+                    <span className="text-sm text-gray-700">{request.idea?.owner?.name || "Unknown"}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">
+                      {request.requested_amount ? `$${request.requested_amount}` : "-"}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">
+                    {request.type || "funding"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={localGetStatusBadge(request.status, request.type)}>
+                    {request.status?.replace('_', ' ') || 'pending'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500">
+                  {new Date(request.created_at).toLocaleDateString('en-US')}
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleEvaluateClick(request)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Evaluate
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Evaluation Modal */}
       {selectedFunding && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedFunding(null)}>
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900">تقييم طلب التمويل #{selectedFunding.id}</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedFunding.type === "funding" ? "Funding Request" : "Task/Phase"} Evaluation
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">{selectedFunding.idea?.title}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedFunding(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-1">الفكرة</h4>
-                  <p className="text-gray-900">{selectedFunding.idea?.title}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-1">المرحلة</h4>
-                  <p className="text-gray-900">{selectedFunding.gantt_name || "—"}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-1">المهمة</h4>
-                  <p className="text-gray-900">{selectedFunding.task_name || "—"}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-1">المبلغ المطلوب</h4>
-                  <p className="text-gray-900 font-bold">{selectedFunding.requested_amount} $</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">المبرر</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700">{selectedFunding.justification || "لا يوجد مبرر"}</p>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">❖ قرار الموافقة</h4>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="is_approved"
-                      checked={evaluation.is_approved}
-                      onChange={(e) => setEvaluation({ ...evaluation, is_approved: e.target.checked })}
-                      className="h-5 w-5 text-blue-600 rounded"
-                    />
-                    <label htmlFor="is_approved" className="mr-3 text-gray-700 font-medium">
-                      الموافقة على طلب التمويل
-                    </label>
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Request ID</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedFunding.funding_id}</p>
                   </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Request Type</p>
+                    <p className="text-sm font-medium text-gray-900 capitalize">{selectedFunding.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Owner</p>
+                    <p className="text-sm font-medium text-gray-900">{selectedFunding.idea?.owner?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Current Status</p>
+                    <span className={localGetStatusBadge(selectedFunding.status, selectedFunding.type)}>
+                      {selectedFunding.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
+              {selectedFunding.type === "funding" && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-blue-600">Requested Amount</p>
+                      <p className="text-lg font-bold text-blue-900">${selectedFunding.requested_amount}</p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-blue-400" />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Evaluation Decision
+                  </label>
+                  <select
+                    value={isApproved}
+                    onChange={(e) => setIsApproved(e.target.value === "true")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  >
+                    <option value="true">Approved</option>
+                    <option value="false">Rejected</option>
+                  </select>
+                </div>
+
+                {selectedFunding.type === "funding" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      المبلغ المعتمد
+                      Approved Amount
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={evaluation.approved_amount}
-                      onChange={(e) => setEvaluation({ ...evaluation, approved_amount: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      placeholder="أدخل المبلغ المعتمد..."
-                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        value={approvedAmount}
+                        onChange={(e) => setApprovedAmount(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                        placeholder="Enter approved amount"
+                      />
+                    </div>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ملاحظات اللجنة
-                    </label>
-                    <textarea
-                      value={evaluation.committee_notes}
-                      onChange={(e) => setEvaluation({ ...evaluation, committee_notes: e.target.value })}
-                      rows="4"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      placeholder="أدخل ملاحظات اللجنة..."
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Committee Notes
+                  </label>
+                  <textarea
+                    value={committeeNotes}
+                    onChange={(e) => setCommitteeNotes(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none min-h-[100px]"
+                    placeholder="Enter evaluation notes and feedback..."
+                  />
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => handleEvaluate(selectedFunding.id)}
-                  disabled={!evaluation.approved_amount}
-                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors ${
-                    !evaluation.approved_amount
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-                >
-                  💾 حفظ التقييم
-                </button>
-                <button
-                  onClick={() => setSelectedFunding(null)}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-medium"
-                >
-                  ❌ إغلاق
-                </button>
-              </div>
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedFunding(null)}
+                className="px-6 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEvaluation}
+                disabled={loading}
+                className={`px-6 py-2 text-sm font-medium text-white rounded-lg transition-all ${
+                  loading ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+              >
+                {loading ? "Processing..." : "Submit Evaluation"}
+              </button>
             </div>
           </div>
         </div>

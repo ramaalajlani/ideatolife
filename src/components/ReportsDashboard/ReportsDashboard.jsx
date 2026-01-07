@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { fetchIdeaReports } from "../../services/reportService";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { fetchReportsByStage } from "../../services/reportService";
 import { useIdea } from "../../context/IdeaContext";
 
 import LoadingSpinner from "../Common/LoadingSpinner";
@@ -8,24 +8,60 @@ import ErrorDisplay from "../Common/ErrorDisplay";
 import DashboardHeader from "./DashboardHeader";
 import ReportsGrid from "./ReportsGrid";
 import EmptyState from "./EmptyState";
-import SummaryStats from "./SummaryStats";
+
+const reportTypes = {
+  initial: { 
+    key: "initial", 
+    label: "Initial Evaluation Reports", 
+    endpoint: 'first-stage-reports',
+    color: "text-blue-600",
+    bgColor: "bg-blue-50"
+  },
+  advanced: { 
+    key: "advanced", 
+    label: "Advanced Evaluation Reports", 
+    endpoint: 'advanced-stage-reports',
+    color: "text-purple-600",
+    bgColor: "bg-purple-50"
+  },
+  launch_evaluation: { 
+    key: "launch_evaluation", 
+    label: "Launch Evaluation Reports", 
+    endpoint: 'launch-evaluation-reports',
+    color: "text-green-600",
+    bgColor: "bg-green-50"
+  },
+  post_launch_followup: { 
+    key: "post_launch_followup", 
+    label: "Post Launch Follow-Up Reports", 
+    endpoint: 'post-launch-reports',
+    color: "text-orange-600",
+    bgColor: "bg-orange-50"
+  }
+};
 
 const ReportsDashboard = () => {
   const navigate = useNavigate();
-  const { ideaId: paramsIdeaId } = useParams();
+  const location = useLocation();
+  const { ideaId: paramsIdeaId } = useParams(); // إزالة reportType من هنا
   const { currentIdea } = useIdea();
-  
   const ideaId = paramsIdeaId || currentIdea?.id;
-  
+
   const [reports, setReports] = useState([]);
-  const [totalReports, setTotalReports] = useState(0);
+  const [ideaInfo, setIdeaInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ideaInfo, setIdeaInfo] = useState(null);
+  
+  // استخراج النوع من query parameters بدلاً من params
+  const searchParams = new URLSearchParams(location.search);
+  const typeFromQuery = searchParams.get('type') || 'initial';
+  const [currentType, setCurrentType] = useState(
+    reportTypes[typeFromQuery] ? typeFromQuery : 'initial'
+  );
 
-  const loadReports = useCallback(async () => {
+  const loadReports = useCallback(async (stageType) => {
     if (!ideaId) {
-      setError("لم يتم تحديد فكرة. يرجى اختيار فكرة أولاً.");
+      setError("No idea has been selected. Please choose an idea first.");
       setLoading(false);
       return;
     }
@@ -33,157 +69,211 @@ const ReportsDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetchIdeaReports(ideaId);
+
+      const data = await fetchReportsByStage(ideaId, stageType);
       
-      const formattedReports = res.data.map(report => ({
-        id: report.report_id,
-        type: report.report_type,
-        description: report.description,
-        score: parseFloat(report.evaluation_score),
-        status: report.status,
-        idea: {
-          id: report.idea.id,
-          title: report.idea.title,
-          status: report.idea.status
-        },
-        committee: report.committee,
-        strengths: report.strengths ? 
-          report.strengths.split('\n').filter(item => item.trim()) : [],
-        weaknesses: report.weaknesses ? 
-          report.weaknesses.split('\n').filter(item => item.trim()) : [],
-        recommendations: report.recommendations ? 
-          report.recommendations.split('\n').filter(item => item.trim()) : [],
-        createdAt: report.created_at
-      }));
+      console.log('API Response for', stageType, ':', data); // للتصحيح
       
-      setReports(formattedReports);
-      setTotalReports(res.total_reports);
-      setIdeaInfo(formattedReports.length > 0 ? formattedReports[0].idea : currentIdea);
+      // البيانات تأتي من الباك إند بهذا الشكل:
+      // {
+      //   idea: { id, title, status },
+      //   total_reports: number,
+      //   reports: array
+      // }
+      
+      if (data) {
+        // استخراج التقارير
+        if (data.reports && Array.isArray(data.reports)) {
+          setReports(data.reports);
+        } else if (Array.isArray(data)) {
+          // للتوافق مع حالات قديمة
+          setReports(data);
+        } else {
+          setReports([]);
+        }
+        
+        // استخراج معلومات الفكرة
+        if (data.idea) {
+          setIdeaInfo(data.idea);
+        }
+      } else {
+        setReports([]);
+        setIdeaInfo(null);
+      }
+      
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-      setError("فشل في تحميل التقارير. يرجى المحاولة مرة أخرى.");
+    } catch (err) {
+      console.error(`Error fetching ${stageType} reports:`, err);
+      setError(err.message || `Failed to load ${stageType} reports`);
       setLoading(false);
+      setReports([]);
     }
-  }, [ideaId, currentIdea]);
+  }, [ideaId]);
 
   useEffect(() => {
-    loadReports();
-  }, [loadReports]);
+    loadReports(currentType);
+  }, [loadReports, currentType]);
 
-  // إظهار رسالة إذا لم يتم اختيار فكرة
+  // تحديث currentType عندما يتغير query parameter
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const typeFromQuery = searchParams.get('type');
+    
+    if (typeFromQuery && reportTypes[typeFromQuery] && typeFromQuery !== currentType) {
+      setCurrentType(typeFromQuery);
+    }
+  }, [location.search, currentType]);
+
+  const handleTypeChange = (typeKey) => {
+    setCurrentType(typeKey);
+    // تحديث الـ URL مع الحفاظ على ideaId وإضافة query parameter للنوع
+    navigate(`/ideas/${ideaId}/reports?type=${typeKey}`, { replace: true });
+  };
+
   if (!ideaId) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <ErrorDisplay 
-            error="لم يتم اختيار فكرة لعرض تقاريرها"
-            type="general"
-            showBackButton={true}
-            showHomeButton={false}
-            onRetry={() => navigate('/profile')}
-            buttonText="العودة للبروفايل"
-          />
-        </div>
+      <div className="min-h-screen w-full flex items-center justify-center p-4">
+        <ErrorDisplay
+          error="No idea has been selected to view its reports"
+          type="general"
+          showBackButton={true}
+          showHomeButton={false}
+          onRetry={() => navigate("/profile")}
+          buttonText="Back to Profile"
+        />
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+      <div className="min-h-screen w-full flex items-center justify-center">
         <LoadingSpinner type="reports" />
       </div>
     );
   }
-  
+
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <ErrorDisplay error={error} type="reports" onRetry={loadReports} />
-        </div>
+      <div className="min-h-screen w-full flex items-center justify-center p-4">
+        <ErrorDisplay 
+          error={error} 
+          type="reports" 
+          onRetry={() => loadReports(currentType)} 
+        />
       </div>
     );
   }
 
+  const currentReportType = reportTypes[currentType] || reportTypes.initial;
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black">
-      <div className="p-4 md:p-6 h-full flex flex-col">
+    <div className="min-h-screen w-full bg-white">
+      <div className="p-4 md:p-6 flex flex-col h-full">
         {/* Header Section */}
         <div className="mb-6 md:mb-8">
-          <DashboardHeader 
-            ideaInfo={ideaInfo} 
-            ideaId={ideaId} 
-            totalReports={totalReports}
-            reports={reports}
+          <DashboardHeader
+            ideaInfo={ideaInfo}
+            ideaId={ideaId}
+            totalReports={reports.length}
+            currentType={currentReportType.label}
           />
         </div>
 
-        {/* Main Content Section */}
-        <div className="flex-1 flex flex-col">
-          {/* Section Header */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex flex-col sm:flex-row items-center justify-between mb-6 md:mb-8 gap-4">
-              <h2 className="text-xl md:text-2xl font-bold text-white text-center sm:text-left">
-                تقارير التقييم <span className="text-orange-400">({totalReports})</span>
-              </h2>
-              <RefreshButton onReload={loadReports} />
-            </div>
+        {/* Report Type Selector */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Report Type:</h2>
+          <div className="flex flex-wrap gap-3">
+            {Object.values(reportTypes).map((type) => (
+              <button
+                key={type.key}
+                onClick={() => handleTypeChange(type.key)}
+                className={`px-5 py-3 rounded-lg font-medium transition-all duration-300 ${
+                  currentType === type.key
+                    ? `${type.bgColor} ${type.color} border-2 border-current shadow-md`
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
           </div>
-          
-          {/* Reports Content Area - Takes full available space */}
-          <div className="flex-1">
-            {totalReports > 0 ? (
-              <div className="h-full">
-                <ReportsGrid reports={reports} />
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <EmptyState ideaId={ideaId} />
-              </div>
-            )}
-          </div>
+        </div>
 
-          {/* Summary Stats - Below reports */}
-          {totalReports > 0 && (
-            <div className="mt-8">
-              <SummaryStats reports={reports} />
+        {/* Current Report Type Info */}
+        <div className={`p-5 rounded-xl mb-8 ${currentReportType.bgColor} border-l-4 ${currentReportType.color} border-l-current`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {currentReportType.label}
+              </h3>
+              <p className="text-gray-700">
+                {currentType === 'initial' && 'Initial evaluation reports from committee members.'}
+                {currentType === 'advanced' && 'Advanced evaluation reports before funding approval.'}
+                {currentType === 'launch_evaluation' && 'Reports evaluating the launch readiness and performance.'}
+                {currentType === 'post_launch_followup' && 'Follow-up reports after project launch.'}
+              </p>
             </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-gray-800">{reports.length}</div>
+              <div className="text-gray-600 text-sm">Total Reports</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reports Section */}
+        <div className="flex-1 flex flex-col">
+          {reports.length > 0 ? (
+            <ReportsGrid 
+              reports={reports} 
+              ideaInfo={ideaInfo} 
+              currentType={currentType}
+            />
+          ) : (
+            <EmptyState 
+              message={`No ${currentReportType.label.toLowerCase()} found for this idea.`}
+              type={currentType}
+              ideaId={ideaId}
+              onAddReport={() => {
+                // يمكنك إضافة وظيفة لإضافة تقرير جديد هنا
+                console.log('Add new report for type:', currentType);
+              }}
+            />
           )}
         </div>
 
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-800">
-          <Footer />
+        {/* Navigation Buttons */}
+        <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate(`/ideas/${ideaId}/roadmap`)}
+              className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Roadmap
+            </button>
+            
+            <button
+              onClick={() => navigate(`/ideas/${ideaId}`)}
+              className="flex items-center gap-2 px-5 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Back to Idea Details
+            </button>
+          </div>
+          
+          <div className="text-gray-500 text-sm text-center">
+            <p>Last update: {new Date().toLocaleString()}</p>
+            <p className="mt-1">Showing {reports.length} report(s)</p>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-const RefreshButton = ({ onReload }) => (
-  <div className="flex items-center gap-3">
-    <div className="text-gray-400 text-sm">
-      {new Date().toLocaleTimeString('ar-SA')}
-    </div>
-    <button 
-      onClick={onReload}
-      className="text-gray-400 hover:text-white transition-colors"
-      title="تحديث"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-    </button>
-  </div>
-);
-
-const Footer = () => (
-  <div className="text-center text-gray-500 text-sm">
-    <p>© {new Date().getFullYear()} نظام إدارة الأفكار • جميع الحقوق محفوظة</p>
-    <p className="mt-1">آخر تحديث للبيانات: {new Date().toLocaleString('ar-SA')}</p>
-  </div>
-);
 
 export default ReportsDashboard;

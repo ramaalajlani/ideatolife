@@ -6,35 +6,47 @@ import ReportDescription from './ReportDescription';
 import ReportLists from './ReportLists';
 import ReportFooter from './ReportFooter';
 
-const ReportCard = ({ report }) => {
-  // تأكد من وجود البيانات
-  if (!report) return null;
+const ReportCard = ({ report, ideaInfo }) => {
+  // التأكد من وجود البيانات
+  if (!report) {
+    return (
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200 p-6">
+        <p className="text-gray-500 text-center">No report data</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full -translate-y-12 translate-x-12 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-100 to-blue-200 rounded-full translate-y-16 -translate-x-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-      
+    <div className="bg-[#FFF2C6] rounded-xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300 relative overflow-hidden group">
+      {/* تصميم ReportHeader الجديد - مستطيل كامل فوق الكارد */}
       <ReportHeader 
-        type={report.type || 'تقرير'} 
-        id={report.id} 
-        status={report.status || 'completed'} 
+        type={report.report_type} 
+        id={report.report_id} 
+        status={report.status}
+        meetingDate={report.meeting?.meeting_date}
       />
       
-      <div className="p-5 md:p-6 relative z-10">
-        <IdeaInfo idea={report.idea || {}} />
+      <div className="p-5 md:p-6 relative z-10 pt-16"> {/* إضافة pt-16 لتعويض ارتفاع الهيدر */}
+        {/* تمرير ideaInfo مع قيمة افتراضية إذا كانت null */}
+        <IdeaInfo idea={ideaInfo || {}} />
+        
         <CommitteeScore 
-          committee={report.committee || 'غير محدد'} 
-          score={report.score || 0} 
+          score={report.evaluation_score} 
+          meeting={report.meeting}
         />
-        <ReportDescription description={report.description || 'لا يوجد وصف'} />
-        <ReportLists 
-          strengths={report.strengths || []}
-          weaknesses={report.weaknesses || []}
-          recommendations={report.recommendations || []}
-        />
-        <ReportFooter createdAt={report.createdAt || 'غير محدد'} />
+        
+        <ReportDescription description={report.description} />
+        
+        {/* ReportLists الجديد - بدون أيقونات وتحت بعض */}
+        <div className="mt-6">
+          <ReportLists 
+            strengths={report.strengths}
+            weaknesses={report.weaknesses}
+            recommendations={report.recommendations}
+          />
+        </div>
+        
+        <ReportFooter createdAt={report.created_at} />
       </div>
     </div>
   );

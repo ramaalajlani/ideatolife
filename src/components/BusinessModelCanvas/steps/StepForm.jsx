@@ -1,38 +1,53 @@
-
+// src/components/BusinessModel/steps/StepForm.jsx
 import React from 'react';
-const StepForm = ({ stepData, formData, onChange }) => {
-  const fieldName = stepData.name;
 
-  if (!fieldName) {
-    return (
-      <div className="w-full">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">{stepData.title}</h2>
-        <p className="text-gray-600 mb-6">خطأ: لم يتم تعريف الحقل</p>
-      </div>
-    );
-  }
+const StepForm = ({ stepData, formData, onChange, readOnly = false }) => {
+  const { title, description, name, placeholder } = stepData;
+
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">{stepData.title}</h2>
-      <p className="text-gray-600 mb-6">{stepData.description}</p>
+    <div className="mb-8">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-2">{title}</h2>
+        <p className="text-gray-600">{description}</p>
+      </div>
       
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <div className="mb-6">
-          <label className="block text-gray-700 text-lg font-semibold mb-3" htmlFor={fieldName}>
-            {stepData.title}
-          </label>
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        {readOnly ? (
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+              {formData[name] || 'لا توجد بيانات'}
+            </p>
+          </div>
+        ) : (
           <textarea
-            id={fieldName}
-            name={fieldName}
-            value={formData[fieldName] || ''}
+            name={name}
+            value={formData[name] || ''}
             onChange={onChange}
-            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-48 resize-none text-lg"
-            placeholder={stepData.placeholder}
-            rows="8"
+            placeholder={placeholder}
+            className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+            rows="10"
           />
-        </div>
+        )}
+        
+        {!readOnly && (
+          <div className="mt-4 text-sm text-gray-500 flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+            </svg>
+            {name === 'value_proposition' && 'اكتب القيمة المقدمة للعملاء بوضوح'}
+            {name === 'customer_segments' && 'حدد شرائح العملاء المستهدفة'}
+            {name === 'revenue_streams' && 'صف مصادر الدخل وكيفية تحقيق الإيرادات'}
+            {name === 'key_partners' && 'اذكر الشركاء الرئيسيين والعلاقات معهم'}
+            {name === 'key_activities' && 'صف الأنشطة الرئيسية لتنفيذ الفكرة'}
+            {name === 'key_resources' && 'حدد الموارد الأساسية المطلوبة'}
+            {name === 'customer_relationships' && 'صف كيفية بناء علاقات مع العملاء'}
+            {name === 'channels' && 'اذكر قنوات الوصول للعملاء والتوزيع'}
+            {name === 'cost_structure' && 'حدد الهيكل التكلفي للفكرة'}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
 export default StepForm;

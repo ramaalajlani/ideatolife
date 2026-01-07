@@ -1,7 +1,6 @@
 // src/api/api.js
 import axios from 'axios';
 
-// استخدام متغيرات Vite بدلاً من process.env
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
@@ -13,7 +12,6 @@ const api = axios.create({
   },
 });
 
-// إضافة التوكن تلقائياً
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');

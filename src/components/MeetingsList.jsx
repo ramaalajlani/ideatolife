@@ -4,8 +4,7 @@ const MeetingsList = ({ meetings, onMeetingSelect }) => {
   if (meetings.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-gray-400 text-4xl mb-3">📅</div>
-        <p className="text-gray-500">لا توجد اجتماعات</p>
+        <p className="text-gray-500">No meetings available</p>
       </div>
     );
   }
@@ -26,7 +25,7 @@ const MeetingsList = ({ meetings, onMeetingSelect }) => {
 const MeetingCard = ({ meeting, onSelect }) => {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('ar-SA', {
+    return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -34,7 +33,7 @@ const MeetingCard = ({ meeting, onSelect }) => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
+    return date.toLocaleDateString([], {
       weekday: 'short',
       day: 'numeric',
       month: 'short'
@@ -43,11 +42,11 @@ const MeetingCard = ({ meeting, onSelect }) => {
 
   const getMeetingType = (type) => {
     const types = {
-      'initial': 'اجتماع مبدئي',
-      'technical_review': 'مراجعة فنية',
-      'funding_review': 'مراجعة تمويل',
-      'marketing_review': 'مراجعة تسويقية',
-      'business_plan_review': 'مراجعة خطة عمل'
+      'initial': 'Initial Meeting',
+      'technical_review': 'Technical Review',
+      'funding_review': 'Funding Review',
+      'marketing_review': 'Marketing Review',
+      'business_plan_review': 'Business Plan Review'
     };
     return types[type] || type;
   };
@@ -56,8 +55,8 @@ const MeetingCard = ({ meeting, onSelect }) => {
     <div
       onClick={() => onSelect(meeting)}
       className={`
-        bg-white border-l-4 p-4 rounded-lg shadow-sm cursor-pointer 
-        hover:shadow-md transition-shadow ${meeting.is_soon ? 'border-red-500' : 'border-blue-500'}
+        bg-[#FCEFCB] border-l-4 p-4 rounded-lg shadow-sm cursor-pointer 
+        hover:shadow-md transition-shadow ${meeting.is_soon ? 'border-red-500' : 'border-orange-500'}
       `}
     >
       <div className="flex justify-between items-start">
@@ -65,20 +64,20 @@ const MeetingCard = ({ meeting, onSelect }) => {
           <h4 className="font-bold text-gray-800 text-lg mb-1">{meeting.idea_title}</h4>
           
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-            <span className="bg-gray-100 px-2 py-1 rounded">{getMeetingType(meeting.type)}</span>
-            <span>👥 {meeting.committee_name}</span>
+            <span className="bg-white/70 px-2 py-1 rounded">{getMeetingType(meeting.type)}</span>
+            <span>{meeting.committee_name}</span>
           </div>
           
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-1">
-              📅 {formatDate(meeting.meeting_date)}
+              Date: {formatDate(meeting.meeting_date)}
             </div>
             <div className="flex items-center gap-1">
-              🕒 {formatTime(meeting.meeting_date)}
+              Time: {formatTime(meeting.meeting_date)}
             </div>
             {meeting.is_soon && (
               <div className="flex items-center gap-1 text-red-600 font-medium">
-                ⚡ خلال {meeting.hours_left} ساعة
+                In {meeting.hours_left} hours
               </div>
             )}
           </div>
@@ -94,9 +93,9 @@ const MeetingCard = ({ meeting, onSelect }) => {
               e.stopPropagation();
               window.open(meeting.meeting_link, '_blank');
             }}
-            className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 whitespace-nowrap"
+            className="ml-4 px-3 py-1 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 whitespace-nowrap"
           >
-            انضم
+            Join
           </button>
         )}
       </div>

@@ -12,7 +12,7 @@ const SWIPER_CONFIG = {
     disableOnInteraction: false,
     pauseOnMouseEnter: false,
   },
-  speed: 5000, // سرعة متوسطة (5 ثواني)
+  speed: 5000, 
   loop: true,
   grabCursor: true,
   allowTouchMove: true,

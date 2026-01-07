@@ -13,7 +13,7 @@ const IdeasList = ({ ideas }) => {
   if (!ideas || ideas.length === 0) {
     return (
       <div className="p-6 bg-white border rounded-xl text-center text-slate-500">
-        No ideas yet — start by submitting your first idea ✨
+        No ideas yet — start by submitting your first idea 
       </div>
     );
   }

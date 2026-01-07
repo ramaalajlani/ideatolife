@@ -1,6 +1,6 @@
 // src/components/GanttChart/TaskModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, FileText, Upload, Trash2 } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 
 const TaskModal = ({ task, phase, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -9,10 +9,8 @@ const TaskModal = ({ task, phase, onClose, onSubmit }) => {
     start_date: '',
     end_date: '',
     priority: 1,
-    progress_percentage: 0,
   });
 
-  const [attachments, setAttachments] = useState([]);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -23,14 +21,8 @@ const TaskModal = ({ task, phase, onClose, onSubmit }) => {
         start_date: task.start_date ? task.start_date.split('T')[0] : '',
         end_date: task.end_date ? task.end_date.split('T')[0] : '',
         priority: task.priority || 1,
-        progress_percentage: task.progress_percentage || 0,
       });
-      
-      if (task.attachments) {
-        setAttachments(Array.isArray(task.attachments) ? task.attachments : [task.attachments]);
-      }
     } else if (phase) {
-      // تعيين تواريخ افتراضية بناءً على المرحلة
       setFormData(prev => ({
         ...prev,
         start_date: phase.start_date ? phase.start_date.split('T')[0] : '',
@@ -43,7 +35,7 @@ const TaskModal = ({ task, phase, onClose, onSubmit }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'progress_percentage' ? parseInt(value) || 0 : value
+      [name]: value,
     }));
     
     if (errors[name]) {
@@ -51,201 +43,157 @@ const TaskModal = ({ task, phase, onClose, onSubmit }) => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setAttachments(prev => [...prev, ...files]);
-  };
-
-  const removeAttachment = (index) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.task_name.trim()) {
-      newErrors.task_name = 'اسم المهمة مطلوب';
+      newErrors.task_name = 'Task name is required';
     }
     
     if (!formData.start_date) {
-      newErrors.start_date = 'تاريخ البداية مطلوب';
+      newErrors.start_date = 'Start date is required';
     }
     
     if (!formData.end_date) {
-      newErrors.end_date = 'تاريخ النهاية مطلوب';
+      newErrors.end_date = 'End date is required';
     } else if (formData.start_date && new Date(formData.end_date) < new Date(formData.start_date)) {
-      newErrors.end_date = 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية';
+      newErrors.end_date = 'End date must be after start date';
     }
-    
-    if (formData.progress_percentage < 0 || formData.progress_percentage > 100) {
-      newErrors.progress_percentage = 'النسبة يجب أن تكون بين 0 و 100';
-    }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     if (validateForm()) {
-      const data = { ...formData };
-      
-      if (attachments.length > 0 && attachments[0] instanceof File) {
-        data.attachments = attachments;
-      }
-      
-      onSubmit(data);
+      onSubmit({ ...formData });
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* رأس النافذة */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-gradient-to-r from-[#FF7F50] to-[#FF9933] text-white">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">
-              {task ? 'تعديل المهمة' : 'إضافة مهمة جديدة'}
+            <h2 className="text-xl font-bold">
+              {task ? 'Edit Task' : 'Add New Task'}
             </h2>
             {phase && (
-              <p className="text-sm text-gray-600 mt-1">
-                ضمن مرحلة: <span className="font-semibold">{phase.phase_name}</span>
+              <p className="text-sm mt-1">
+                In Phase: <span className="font-semibold">{phase.phase_name}</span>
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-orange-600/20 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        {/* جسم النافذة */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            {/* اسم المهمة */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                اسم المهمة *
-              </label>
-              <input
-                type="text"
-                name="task_name"
-                value={formData.task_name}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
-                  errors.task_name ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="مثال: تصميم الصفحة الرئيسية"
-              />
-              {errors.task_name && (
-                <p className="mt-1 text-sm text-red-600">{errors.task_name}</p>
-              )}
-            </div>
-            
-            {/* الوصف */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                الوصف
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none"
-                placeholder="وصف تفصيلي للمهمة..."
-              />
-            </div>
-            
-            {/* التواريخ */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  تاريخ البداية *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="date"
-                    name="start_date"
-                    value={formData.start_date}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition pr-10 ${
-                      errors.start_date ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-                {errors.start_date && (
-                  <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  تاريخ النهاية *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="date"
-                    name="end_date"
-                    value={formData.end_date}
-                    onChange={handleChange}
-                    min={formData.start_date}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition pr-10 ${
-                      errors.end_date ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-                {errors.end_date && (
-                  <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>
-                )}
-              </div>
-            </div>
-            
-            {/* الأولوية والتقدم */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  الأولوية
-                </label>
-                <select
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                >
-                  {[1, 2, 3, 4, 5].map(num => (
-                    <option key={num} value={num}>
-                      {num} {num === 1 ? '(الأقل)' : num === 5 ? '(الأعلى)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-     
-            </div>
-            
-           
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Task Name */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Task Name *</label>
+            <input
+              type="text"
+              name="task_name"
+              value={formData.task_name}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-lg outline-none transition ${
+                errors.task_name ? 'border-red-500' : 'border-gray-300'
+              } focus:ring-2 focus:ring-[#FF9E55] focus:border-[#FF9E55]`}
+              placeholder="Example: Homepage Design"
+            />
+            {errors.task_name && <p className="mt-1 text-sm text-red-600">{errors.task_name}</p>}
           </div>
-          
-          {/* أزرار النافذة */}
-          <div className="flex gap-3 mt-8">
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="3"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition resize-none focus:ring-2 focus:ring-[#FF9E55] focus:border-[#FF9E55]"
+              placeholder="Detailed description of the task..."
+            />
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Start Date *</label>
+              <div className="relative">
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  name="start_date"
+                  value={formData.start_date}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg outline-none transition pr-10 ${
+                    errors.start_date ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-[#FF9E55] focus:border-[#FF9E55]`}
+                />
+              </div>
+              {errors.start_date && <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">End Date *</label>
+              <div className="relative">
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  name="end_date"
+                  value={formData.end_date}
+                  onChange={handleChange}
+                  min={formData.start_date}
+                  className={`w-full px-4 py-2 border rounded-lg outline-none transition pr-10 ${
+                    errors.end_date ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-[#FF9E55] focus:border-[#FF9E55]`}
+                />
+              </div>
+              {errors.end_date && <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>}
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Priority</label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition focus:ring-2 focus:ring-[#FF9E55] focus:border-[#FF9E55]"
+            >
+              {[1, 2, 3, 4, 5].map(num => (
+                <option key={num} value={num}>
+                  {num} {num === 1 ? '(Lowest)' : num === 5 ? '(Highest)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+              className="flex-1 py-3 bg-gradient-to-r from-[#FF8C42] to-[#FF6F31] hover:from-[#FF9E55] hover:to-[#FF8333] text-white rounded-lg font-medium transition-all"
             >
-              إلغاء
+              Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              className="flex-1 py-3 bg-gradient-to-r from-[#FF8C42] to-[#FF6F31] hover:from-[#FF9E55] hover:to-[#FF8333] text-white rounded-lg font-medium transition-all"
             >
-              {task ? 'تحديث المهمة' : 'إضافة المهمة'}
+              {task ? 'Update Task' : 'Add Task'}
             </button>
           </div>
         </form>

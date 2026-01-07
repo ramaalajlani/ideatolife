@@ -1,57 +1,107 @@
-// src/pages/dashboardcommit/components/DashboardSidebar/DashboardSidebar.jsx
 import React from "react";
 
 const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout }) => {
   const tabs = [
-    { id: "ideas", label: "Assigned Ideas" },
-    { id: "evaluations", label: "Evaluations" },
-    { id: "meetings", label: "Meetings" },
-    { id: "bmcs", label: "Business Models" },
-    { id: "fundingRequests", label: "Funding Requests" },
-    { id: "fundingChecks", label: "Funding Checks" }
+    { 
+      id: "ideas", 
+      label: "Assigned Ideas" 
+    },
+    { 
+      id: "evaluations", 
+      label: "Evaluations" 
+    },
+    { 
+      id: "meetings", 
+      label: "Meetings" 
+    },
+    { 
+      id: "bmcs", 
+      label: "Business Models" 
+    },
+    { 
+      id: "fundingRequests", 
+      label: "Funding Requests" 
+    },
+    { 
+      id: "fundingChecks", 
+      label: "Funding Checks" 
+    },
+    { 
+      id: "launchRequests", 
+      label: "Launch Requests" 
+    },
+    { 
+      id: "postLaunch", 
+      label: "Post-Launch Followups" 
+    },
+    { 
+      id: "gantt", 
+      label: "Gantt Chart" 
+    }
   ];
 
   return (
-    <div className="w-72 bg-[#0F1115] text-white h-full flex flex-col border-r border-white/5">
-      <div className="p-8">
-        <div className="flex items-center gap-3 mb-12">
-
-          <h2 className="text-xl font-black tracking-tighter italic">
-        commite<span className="text-orange-500">    member</span>
-          </h2>
-        </div>
-        
-        <nav className="space-y-1">
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4 px-4">Management</p>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`w-full text-left px-4 py-3.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'bg-gradient-to-r from-orange-600 to-red-700 text-white shadow-xl'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className="mt-auto p-8 border-t border-white/5 bg-black/20">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-red-800 flex items-center justify-center text-xs font-bold border-2 border-white/10">
-            {userData?.name.split(' ').map(n => n[0]).join('')}
+    <div className="w-64 bg-gray-900 h-full flex flex-col">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-800">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-orange-600 to-orange-800 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">CM</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-white leading-none">{userData?.name}</p>
-            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tight">{userData?.role}</p>
+            <h2 className="text-lg font-bold text-white tracking-tight">
+              Committee Dashboard
+            </h2>
+            <p className="text-xs text-gray-400 mt-1">Management Panel</p>
           </div>
         </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-2">
+            Navigation
+          </p>
+          <div className="space-y-1">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-r from-orange-600 to-orange-800 text-white shadow-lg'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <span className="text-sm font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* User Profile & Logout - ثابت في الأسفل */}
+      <div className="mt-auto p-6 border-t border-gray-800 bg-gray-900">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-700 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold">
+              {userData?.name?.charAt(0) || "C"}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">
+              {userData?.name || "Committee Member"}
+            </p>
+            <p className="text-xs text-gray-400 truncate">
+              {userData?.role || "Committee Member"}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={onLogout}
-          className="mt-4 w-full text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white py-2 px-4 rounded-lg hover:bg-white/5 transition-colors"
+          className="w-full px-4 py-2.5 text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
         >
           Logout
         </button>

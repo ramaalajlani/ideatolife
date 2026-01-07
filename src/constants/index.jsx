@@ -1,4 +1,3 @@
-// src/constants/index.js
 import { 
   BotMessageSquare, 
   BatteryCharging, 
@@ -18,13 +17,13 @@ import {
 
 // إضافة استيراد الصورة هنا
 import successImg from "../assets/code.jpg";
-
 export const navItems = [
-  { label: "Features", href: "#" },
-  { label: "Workflow", href: "#" },
-  { label: "Pricing", href: "#" },
-  { label: "Testimonials", href: "#" },
+  { label: "Features", path: "/#features", scrollId: "features" },
+  { label: "Workflow", path: "/#workflow", scrollId: "workflow" },
+  { label: "Success Stories", path: "/#success-stories", scrollId: "success-stories" },
+  { label: "Expert Committee", path: "/#expert-committee", scrollId: "expert-committee" },// رابط لصفحة مستقلة
 ];
+
 
 export const workflowSteps = [
   {

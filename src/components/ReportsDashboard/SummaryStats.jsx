@@ -8,28 +8,27 @@ const SummaryStats = ({ reports }) => {
       ? (reports.reduce((sum, r) => sum + r.score, 0) / reports.length).toFixed(1)
       : 0,
     reportTypes: [...new Set(reports.map(r => r.type))],
-    committees: [...new Set(reports.filter(r => r.committee).map(r => r.committee))]
   };
 
   return (
-    <div className="bg-gradient-to-r from-gray-900 to-black border border-gray-800 rounded-2xl p-4 md:p-6 mb-8">
-      <h3 className="text-white font-bold text-lg md:text-xl mb-4 md:mb-6 text-center">ملخص التقارير</h3>
+    <div className="bg-[#FDFFB8] border border-amber-200 rounded-2xl p-4 md:p-6 mb-8 shadow-sm">
+      <h3 className="text-gray-900 font-bold text-lg md:text-xl mb-4 md:mb-6 text-center">Report Summary</h3>
       
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <StatCard 
           value={stats.completed} 
-          label="تقارير مكتملة" 
-          color="text-green-400" 
+          label="Completed Reports" 
+          color="text-green-600" 
         />
         <StatCard 
           value={stats.highScore} 
-          label="تقارير عالية الدرجة (70%+)" 
-          color="text-blue-400" 
+          label="High Score Reports (70%+)" 
+          color="text-blue-600" 
         />
         <StatCard 
           value={`${stats.averageScore}%`} 
-          label="متوسط الدرجات" 
-          color="text-orange-400" 
+          label="Average Score" 
+          color="text-amber-600" 
         />
       </div>
       
@@ -39,48 +38,42 @@ const SummaryStats = ({ reports }) => {
 };
 
 const StatCard = ({ value, label, color }) => (
-  <div className="text-center p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+  <div className="text-center p-4 bg-white/80 rounded-xl border border-amber-100 shadow-sm">
     <div className={`text-2xl md:text-3xl font-bold ${color} mb-2`}>
       {value}
     </div>
-    <p className="text-gray-400 text-sm">{label}</p>
+    <p className="text-gray-700 text-sm font-medium">{label}</p>
   </div>
 );
 
 const AdditionalStats = ({ stats }) => (
-  <div className="mt-6 pt-6 border-t border-gray-800">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="mt-6 pt-6 border-t border-amber-200">
+    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
       <StatList 
-        title="أنواع التقارير" 
+        title="Report Types" 
         items={stats.reportTypes} 
-        color="bg-gray-800 text-gray-300" 
-      />
-      <StatList 
-        title="اللجان المشاركة" 
-        items={stats.committees} 
-        color="bg-blue-900/30 text-blue-300"
-        maxItems={3}
+        color="bg-amber-100 text-amber-800 border border-amber-200" 
       />
     </div>
   </div>
 );
 
 const StatList = ({ title, items, color, maxItems = 5 }) => (
-  <div className="p-4 bg-gray-900/30 rounded-lg">
-    <p className="text-gray-400 text-sm mb-2">{title}:</p>
+  <div className="p-4 bg-white/80 rounded-lg border border-amber-100 shadow-sm">
+    <p className="text-gray-700 text-sm font-medium mb-2">{title}:</p>
     <div className="flex flex-wrap gap-2">
       {items.slice(0, maxItems).map((item, index) => (
-        <span key={index} className={`px-3 py-1 rounded-full text-xs ${color}`}>
+        <span key={index} className={`px-3 py-1.5 rounded-full text-sm font-medium ${color}`}>
           {item}
         </span>
       ))}
       {items.length > maxItems && (
-        <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs">
-          +{items.length - maxItems} أخرى
+        <span className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border border-gray-200">
+          +{items.length - maxItems} more
         </span>
       )}
     </div>
   </div>
 );
 
-export default SummaryStats;
+export default SummaryStats
