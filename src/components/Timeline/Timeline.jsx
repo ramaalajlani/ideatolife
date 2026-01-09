@@ -406,91 +406,92 @@ const Timeline = () => {
         </Transition>
 
         {/* Withdrawal History & Results Modal (New) */}
-        <Transition show={isHistoryModalOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-[101]" onClose={() => setIsHistoryModalOpen(false)}>
-            <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200">
-              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
-            </Transition.Child>
-            <div className="fixed inset-0 overflow-y-auto">
-              <div className="flex min-h-full items-center justify-center p-4">
-                <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200">
-                  <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-[32px] bg-white p-8 shadow-2xl transition-all border border-slate-100">
-                    <div className="flex justify-between items-center mb-8">
-                      <div>
-                        <Dialog.Title as="h3" className="text-2xl font-black text-slate-900">Withdrawal Requests</Dialog.Title>
-                        <p className="text-slate-500 font-medium">History and decisions of the committee</p>
+  <Transition show={isHistoryModalOpen} as={Fragment}>
+  <Dialog as="div" className="relative z-[101]" onClose={() => setIsHistoryModalOpen(false)}>
+    <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200">
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
+    </Transition.Child>
+    <div className="fixed inset-0 overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-4">
+        <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200">
+          <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-[32px] bg-white p-8 shadow-2xl transition-all border border-slate-100 font-sans">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <Dialog.Title as="h3" className="text-2xl font-black text-slate-900">Withdrawal Requests</Dialog.Title>
+                <p className="text-slate-500 font-medium">History and decisions of the committee</p>
+              </div>
+              <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={24} /></button>
+            </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {myWithdrawals.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                  <History className="mx-auto w-12 h-12 text-slate-300 mb-4" />
+                  <p className="text-slate-500 font-bold">No withdrawal requests found.</p>
+                </div>
+              ) : (
+                myWithdrawals.map((item, idx) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-[24px] p-6 hover:shadow-lg transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
+                          item.committee_response.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                          item.committee_response.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {item.committee_response.status}
+                        </div>
+                        <span className="text-xs font-bold text-slate-400">{item.request.created_at}</span>
                       </div>
-                      <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={24} /></button>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-xs font-black text-slate-400 uppercase mb-1">Your Reason:</p>
+                      <p className="text-slate-700 text-sm font-medium">{item.request.reason}</p>
                     </div>
 
-                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                      {myWithdrawals.length === 0 ? (
-                        <div className="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                          <History className="mx-auto w-12 h-12 text-slate-300 mb-4" />
-                          <p className="text-slate-500 font-bold">No withdrawal requests found.</p>
+                    {item.committee_response.status !== 'pending' && (
+                      <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-4 rounded-2xl">
+                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Committee Notes:</p>
+                          <p className="text-slate-600 text-sm italic">"{item.committee_response.committee_notes || 'No notes provided'}"</p>
                         </div>
-                      ) : (
-                        myWithdrawals.map((item, idx) => (
-                          <div key={idx} className="bg-white border border-slate-200 rounded-[24px] p-6 hover:shadow-lg transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
-                                  item.committee_response.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                  item.committee_response.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                                }`}>
-                                  {item.committee_response.status}
-                                </div>
-                                <span className="text-xs font-bold text-slate-400">{item.request.created_at}</span>
-                              </div>
+                        
+                        {item.committee_response.status === 'approved' && (
+                          <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="text-[10px] font-black text-orange-400 uppercase">Penalty Amount:</p>
+                              {item.committee_response.penalty_paid && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                                  <CheckCircle2 size={12} /> Paid
+                                </span>
+                              )}
                             </div>
+                            <p className="text-xl font-black text-orange-700">${item.committee_response.penalty_amount}</p>
                             
-                            <div className="mb-4">
-                              <p className="text-xs font-black text-slate-400 uppercase mb-1">Your Reason:</p>
-                              <p className="text-slate-700 text-sm font-medium">{item.request.reason}</p>
-                            </div>
-
-                            {item.committee_response.status !== 'pending' && (
-                              <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-slate-50 p-4 rounded-2xl">
-                                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Committee Notes:</p>
-                                  <p className="text-slate-600 text-sm italic">"{item.committee_response.committee_notes || 'No notes provided'}"</p>
-                                </div>
-                                
-                                {item.committee_response.status === 'approved' && (
-                                  <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <p className="text-[10px] font-black text-orange-400 uppercase">Penalty Amount:</p>
-                                      {item.committee_response.penalty_paid && (
-                                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                                          <CheckCircle2 size={12} /> Paid
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xl font-black text-orange-700">${item.committee_response.penalty_amount}</p>
-                                    
-                                    {!item.committee_response.penalty_paid && (
-                                      <button 
-                                        disabled={executingPay}
-                                        onClick={() => handleExecutePayment(item.request.id)}
-                                        className="w-full mt-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all active:scale-95"
-                                      >
-                                        {executingPay ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CreditCard size={14} /> Pay & Withdraw Now</>}
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                            {!item.committee_response.penalty_paid && (
+                              <button 
+                                disabled={executingPay}
+                                onClick={() => handleExecutePayment(item.request.id)}
+                                className="w-full mt-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all active:scale-95"
+                              >
+                                {executingPay ? <RefreshCw className="w-4 h-4 animate-spin" /> : <><CreditCard size={14} /> Pay & Withdraw Now</>}
+                              </button>
                             )}
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </Dialog.Panel>
-                </Transition.Child>
-              </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
-          </Dialog>
-        </Transition>
+          </Dialog.Panel>
+        </Transition.Child>
+      </div>
+    </div>
+  </Dialog>
+</Transition>
+
 
         {/* Navigation Legend */}
         <div className="mt-12 p-6 bg-gray-50 rounded-xl border">

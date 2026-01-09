@@ -16,11 +16,14 @@ function CommitteeDashboard() {
   const [fundingRequests, setFundingRequests] = useState([]);
   const [fundingChecks, setFundingChecks] = useState([]);
   const [launchRequests, setLaunchRequests] = useState([]);
-  const [withdrawalRequests, setWithdrawalRequests] = useState([]); // ✨ جديد: طلبات الانسحاب
+  const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   const [committeeInfo, setCommitteeInfo] = useState({
     name: "Loading...",
     role: "Committee Member"
   });
+
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [activeTab, setActiveTab] = useState("bmcs");
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,7 @@ function CommitteeDashboard() {
     fundingRequestsCount: 0,
     fundingChecksCount: 0,
     pendingLaunchRequests: 0,
-    pendingWithdrawals: 0 // ✨ جديد
+    pendingWithdrawals: 0
   });
 
   // جلب كل البيانات دفعة واحدة
@@ -63,22 +66,28 @@ function CommitteeDashboard() {
         fundingRequestsResponse,
         fundingChecksResponse,
         launchRequestsResponse,
-        withdrawalRequestsResponse, // ✨ جديد
-        meetingsResponse
+        withdrawalRequestsResponse,
+        meetingsResponse,
+        notificationsResponse
       ] = await Promise.all([
         axios.get("http://127.0.0.1:8000/api/committee/bmcs", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { bmcs: [] } })),
         axios.get("http://127.0.0.1:8000/api/committee/fundings", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { funding_requests: [] } })),
         axios.get("http://127.0.0.1:8000/api/committee/funding-checks", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { checks: [] } })),
         axios.get("http://127.0.0.1:8000/api/launch-requests/pending", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { pending_launch_requests: [] } })),
-        axios.get("http://127.0.0.1:8000/api/committee/withdrawal-requests", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { requests: [] } })), // ✨ جديد
-        axios.get("http://127.0.0.1:8000/api/committee/upcoming-meetings", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { upcoming_meetings: [] } }))
+        axios.get("http://127.0.0.1:8000/api/committee/withdrawal-requests", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { requests: [] } })),
+        axios.get("http://127.0.0.1:8000/api/committee/upcoming-meetings", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { upcoming_meetings: [] } })),
+        axios.get("http://127.0.0.1:8000/api/notifications/owner", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { notifications: [], count: 0 } }))
       ]);
 
       setBmcs(bmcsResponse.data?.bmcs || []);
       setFundingRequests(fundingRequestsResponse.data?.funding_requests || []);
       setFundingChecks(fundingChecksResponse.data?.checks || []);
       setLaunchRequests(launchRequestsResponse.data?.pending_launch_requests || []);
-      setWithdrawalRequests(withdrawalRequestsResponse.data?.requests || []); // ✨ جديد: إصلاح المفتاح
+      setWithdrawalRequests(withdrawalRequestsResponse.data?.requests || []);
+      setNotifications(notificationsResponse.data?.notifications || []);
+      setUnreadCount(
+        (notificationsResponse.data?.notifications || []).filter(n => n.is_read === 0).length
+      );
 
       setStats({
         upcomingMeetings: meetingsResponse.data?.upcoming_meetings?.length || 0,
@@ -86,7 +95,7 @@ function CommitteeDashboard() {
         fundingRequestsCount: fundingRequestsResponse.data?.funding_requests?.length || 0,
         fundingChecksCount: fundingChecksResponse.data?.checks?.length || 0,
         pendingLaunchRequests: launchRequestsResponse.data?.pending_launch_requests?.length || 0,
-        pendingWithdrawals: withdrawalRequestsResponse.data?.total_requests || 0 // ✨ جديد
+        pendingWithdrawals: withdrawalRequestsResponse.data?.total_requests || 0
       });
 
     } catch (err) {
@@ -122,7 +131,7 @@ function CommitteeDashboard() {
     { id: "fundingRequests", label: "Funding Requests", badge: stats.fundingRequestsCount },
     { id: "fundingChecks", label: "Funding Checks", badge: stats.fundingChecksCount },
     { id: "launchRequests", label: "Launch Requests", badge: stats.pendingLaunchRequests },
-    { id: "withdrawals", label: "Withdrawal Requests", badge: stats.pendingWithdrawals }, // ✨ جديد
+    { id: "withdrawals", label: "Withdrawal Requests", badge: stats.pendingWithdrawals },
     { id: "gantt", label: "Gantt Chart" }
   ];
 
@@ -141,7 +150,9 @@ function CommitteeDashboard() {
           activeTab={activeTab}
           tabs={tabs}
           userName={committeeInfo.name}
-          onTabChange={handleTabChange}
+          token={localStorage.getItem("committee_token")} // ✅ تمرير التوكن
+          notifications={notifications} // ✅ تمرير الإشعارات
+          unreadCount={unreadCount} // ✅ تمرير عدد غير المقروءة
         />
 
         <main className="flex-1 overflow-auto p-8 md:p-10">
@@ -150,8 +161,8 @@ function CommitteeDashboard() {
             bmcs={bmcs}
             fundingRequests={fundingRequests}
             fundingChecks={fundingChecks}
-            launchRequests={launchRequests} // ← بيانات طلبات الإطلاق
-            withdrawalRequests={withdrawalRequests} // ✨ جديد: تمرير بيانات طلبات الانسحاب
+            launchRequests={launchRequests}
+            withdrawalRequests={withdrawalRequests}
             selectedIdeaId={selectedIdeaId}
             onRefresh={fetchAllData}
             isLoading={loading}
