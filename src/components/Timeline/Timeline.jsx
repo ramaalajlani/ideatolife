@@ -232,17 +232,7 @@ const Timeline = () => {
               </button>
             </div>
             
-            <div className="flex items-center gap-3">
-              {lastUpdated && (
-                <div className="flex items-center gap-2 bg-gray-50 text-gray-600 px-3 py-2 rounded-lg border border-gray-200">
-                  <Clock className="w-4 h-4" />
-                  <div>
-                    <div className="text-xs">Last updated</div>
-                    <div className="text-sm font-medium">{getTimeSinceUpdate()}</div>
-                  </div>
-                </div>
-              )}
-            </div>
+       
           </div>
           
           <div className="bg-gradient-to-r from-[#FFD586] to-[#FFE8A5] rounded-2xl shadow-lg p-6 border border-gray-200 mb-8">
@@ -511,7 +501,7 @@ const Timeline = () => {
             </div>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0"><RefreshCw className="w-4 h-4 text-gray-600" /></div>
-              <div><h4 className="font-medium text-gray-800">Sync</h4><p className="text-sm text-gray-600 mt-1">Data refreshes every 30 seconds</p></div>
+
             </div>
           </div>
         </div>

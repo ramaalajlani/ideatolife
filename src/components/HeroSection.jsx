@@ -31,7 +31,7 @@ const HeroSection = () => {
   const parallaxY = useTransform(scrollY, [0, 400], [0, -60]);
 
   const handleStartFree = () => {
-    navigate('/prodify'); // تم التعديل هنا
+    navigate('/register'); // تم التعديل هنا
   };
 
   const title = "Software Startup Incubator Platform";
