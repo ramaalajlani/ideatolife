@@ -66,7 +66,14 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
   const handleClick = () => {
     // يمكن النقر على: المرحلة المكتملة، الحالية، أو المرحلة التالية فقط
     if (!isCompleted && !isCurrent && !isNextStage) return;
-    
+
+    // حالة خاصة لمرحلة Post-Launch Follow-up
+    if (stage_name === "Post-Launch Follow-up" && ideaId) {
+      // تعديل الرابط ليطابق الـ Route الصحيح:
+      navigate(`/ideas/${ideaId}/post-launch-followups`);
+      return;
+    }
+
     if (link?.url && link.url !== '#') {
       navigate(link.url);
     } else if (ideaId) {
@@ -132,14 +139,14 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
           isCurrent ? 'hover:scale-105 hover:shadow-2xl cursor-pointer ring-4 ring-yellow-400 ring-opacity-50' : 
           isCompleted ? 'hover:scale-105 hover:shadow-2xl cursor-pointer ring-2 ring-green-400' : 
           isNextStage ? 'hover:scale-105 hover:shadow-2xl cursor-pointer ring-2 ring-blue-400 ring-opacity-50' : ''
-        }`}
+        }` }
         onClick={handleClick}
         style={{
           background: `linear-gradient(145deg, ${colors.light} 0%, ${colors.main} 100%)`,
           border: `3px solid ${colors.dark}`,
         }}
       >
-        {/* Role Badge - Fixed position outside container */}
+        {/* Role Badge */}
         <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-bold shadow-md z-40 ${stageRole.badgeColor}`}>
           {stageRole.role}
         </div>
@@ -163,10 +170,10 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
           }}
         ></div>
 
-        {/* Content */}
+        {/* Content */} 
         <div className="relative z-10 p-6 rounded-xl bg-white/95 backdrop-blur-sm m-2">
-          
-          {/* Lock Layer for Locked Stages (غير التالية) */}
+
+          {/* Lock Layer */}
           {!isCompleted && !isCurrent && !isNextStage && (
             <div className="absolute inset-0 rounded-xl bg-gray-800/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center">
               <Lock className="w-16 h-16 text-white mb-4" />
@@ -185,7 +192,7 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
             </div>
           )}
 
-          {/* Large Completion Checkmark for Completed Stages */}
+          {/* Large Completion Checkmark */}
           {isCompleted && (
             <div className="absolute -top-6 -right-6 z-30">
               <div className="bg-green-500 rounded-full p-3 shadow-2xl animate-bounce">
@@ -206,17 +213,13 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
           )}
 
           {/* Animation Container */}
-          <div className={`h-48 mb-4 rounded-lg overflow-hidden border-2 border-white shadow-lg ${
-            !isCompleted && !isCurrent && !isNextStage ? 'grayscale' : ''
-          }`}>
+          <div className={`h-48 mb-4 rounded-lg overflow-hidden border-2 border-white shadow-lg ${!isCompleted && !isCurrent && !isNextStage ? 'grayscale' : ''}`}>
             <Lottie
               animationData={animation}
               loop={isCurrent || isCompleted || isNextStage}
               autoplay={true}
               className="h-full w-full"
             />
-            
-            {/* Lock Overlay on Animation - فقط للمراحل المقفلة (غير التالية) */}
             {!isCompleted && !isCurrent && !isNextStage && (
               <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
                 <Lock className="w-12 h-12 text-white/90" />
@@ -224,24 +227,18 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
             )}
           </div>
 
-          {/* Stage Name in Black */}
+          {/* Stage Name */}
           <div 
             className="relative w-full p-3 text-center text-lg font-bold uppercase tracking-wider rounded-lg shadow-md mb-3"
-            style={{ 
-              backgroundColor: colors.main, 
-              color: 'black',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.15)'
-            }}
+            style={{ backgroundColor: colors.main, color: 'black', textShadow: '1px 1px 2px rgba(0,0,0,0.15)' }}
           >
             {stage_name}
-            
-            {/* Status Badge */}
             <span className={`absolute -top-2 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold ${statusInfo.bgColor} ${statusInfo.color}`}>
               {statusInfo.badge}
             </span>
           </div>
 
-          {/* Current Stage Guidance - تظهر فقط للمرحلة الحالية */}
+          {/* Current Stage Guidance */}
           {isCurrent && message && (
             <div className="mb-4">
               <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
@@ -258,7 +255,7 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
             </div>
           )}
 
-          {/* Next Stage Preview - تظهر للمرحلة التالية */}
+          {/* Next Stage Preview */}
           {isNextStage && !isCurrent && !isCompleted && message && (
             <div className="mb-4">
               <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200 shadow-sm">
@@ -280,26 +277,17 @@ const TimelineItem = ({ data, index, roadmapInfo, ideaId, allStages }) => {
             <div className={`px-3 py-1 rounded-full font-medium ${statusInfo.bgColor} ${statusInfo.color}`}>
               {statusInfo.text}
             </div>
-            
-            {/* Action Button - تظهر فقط للمراحل المكتملة، الحالية، والتالية */}
-            {(isCurrent || isCompleted || isNextStage) && 
-             link?.url && link.url !== '#' && (
+
+            {(isCurrent || isCompleted || isNextStage) && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(link.url);
-                }}
+                onClick={(e) => { e.stopPropagation(); handleClick(); }}
                 className={`px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg ${
-                  isCurrent 
-                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
-                    : isCompleted
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
-                    : isNextStage
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                    : ''
+                  isCurrent ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''
+                }${isCompleted ? 'bg-green-500 hover:bg-green-600 text-white' : ''}${
+                  isNextStage ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
                 }`}
               >
-                {link.label}
+                {link?.label || 'Go'}
               </button>
             )}
           </div>

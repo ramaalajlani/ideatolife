@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { fetchReportsByStage } from "../../services/reportService";
+import { fetchAllReports } from "../../services/reportService";
 import { useIdea } from "../../context/IdeaContext";
 
 import LoadingSpinner from "../Common/LoadingSpinner";
@@ -10,31 +10,33 @@ import ReportsGrid from "./ReportsGrid";
 import EmptyState from "./EmptyState";
 
 const reportTypes = {
+  all: {
+    key: "all",
+    label: "All Reports",
+    color: "text-gray-800",
+    bgColor: "bg-gray-100",
+  },
   initial: { 
     key: "initial", 
     label: "Initial Evaluation Reports", 
-    endpoint: 'first-stage-reports',
     color: "text-blue-600",
     bgColor: "bg-blue-50"
   },
   advanced: { 
     key: "advanced", 
     label: "Advanced Evaluation Reports", 
-    endpoint: 'advanced-stage-reports',
     color: "text-purple-600",
     bgColor: "bg-purple-50"
   },
   launch_evaluation: { 
     key: "launch_evaluation", 
     label: "Launch Evaluation Reports", 
-    endpoint: 'launch-evaluation-reports',
     color: "text-green-600",
     bgColor: "bg-green-50"
   },
   post_launch_followup: { 
     key: "post_launch_followup", 
     label: "Post Launch Follow-Up Reports", 
-    endpoint: 'post-launch-reports',
     color: "text-orange-600",
     bgColor: "bg-orange-50"
   }
@@ -43,23 +45,25 @@ const reportTypes = {
 const ReportsDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { ideaId: paramsIdeaId } = useParams(); // إزالة reportType من هنا
+  const { ideaId: paramsIdeaId } = useParams(); 
   const { currentIdea } = useIdea();
   const ideaId = paramsIdeaId || currentIdea?.id;
 
   const [reports, setReports] = useState([]);
+  const [allReports, setAllReports] = useState([]);
   const [ideaInfo, setIdeaInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // استخراج النوع من query parameters بدلاً من params
+  // استخراج النوع من query parameters
   const searchParams = new URLSearchParams(location.search);
-  const typeFromQuery = searchParams.get('type') || 'initial';
+  const typeFromQuery = searchParams.get('type') || 'all';
   const [currentType, setCurrentType] = useState(
-    reportTypes[typeFromQuery] ? typeFromQuery : 'initial'
+    reportTypes[typeFromQuery] ? typeFromQuery : 'all'
   );
 
-  const loadReports = useCallback(async (stageType) => {
+  // دالة تحميل كل التقارير مرة واحدة
+  const loadReports = useCallback(async () => {
     if (!ideaId) {
       setError("No idea has been selected. Please choose an idea first.");
       setLoading(false);
@@ -70,51 +74,53 @@ const ReportsDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const data = await fetchReportsByStage(ideaId, stageType);
-      
-      console.log('API Response for', stageType, ':', data); // للتصحيح
-      
-      // البيانات تأتي من الباك إند بهذا الشكل:
-      // {
-      //   idea: { id, title, status },
-      //   total_reports: number,
-      //   reports: array
-      // }
-      
-      if (data) {
-        // استخراج التقارير
-        if (data.reports && Array.isArray(data.reports)) {
-          setReports(data.reports);
-        } else if (Array.isArray(data)) {
-          // للتوافق مع حالات قديمة
-          setReports(data);
-        } else {
-          setReports([]);
-        }
-        
-        // استخراج معلومات الفكرة
-        if (data.idea) {
-          setIdeaInfo(data.idea);
-        }
+      // جلب جميع التقارير
+      const data = await fetchAllReports(ideaId);
+
+      if (data && data.reports) {
+        setAllReports(data.reports);
+
+        // إذا النوع الحالي "all" نعرض كل التقارير
+        const filteredReports = currentType === "all"
+          ? data.reports.sort((a, b) => b.report_id - a.report_id) // فرز تنازلي حسب report_id
+          : data.reports.filter(r => r.report_type === currentType);
+
+        setReports(filteredReports);
       } else {
+        setAllReports([]);
         setReports([]);
-        setIdeaInfo(null);
       }
-      
+
+      if (data.idea) {
+        setIdeaInfo(data.idea);
+      }
+
       setLoading(false);
     } catch (err) {
-      console.error(`Error fetching ${stageType} reports:`, err);
-      setError(err.message || `Failed to load ${stageType} reports`);
+      console.error("Error fetching all reports:", err);
+      setError(err.message || "Failed to load reports");
       setLoading(false);
       setReports([]);
+      setAllReports([]);
     }
-  }, [ideaId]);
+  }, [ideaId, currentType]);
+
+  // إعادة تصفية التقارير عند تغيير النوع
+  useEffect(() => {
+    if (allReports.length > 0) {
+      let filteredReports = currentType === "all"
+        ? allReports.sort((a, b) => b.report_id - a.report_id) // فرز All Reports
+        : allReports.filter(r => r.report_type === currentType);
+
+      setReports(filteredReports);
+    }
+  }, [currentType, allReports]);
 
   useEffect(() => {
-    loadReports(currentType);
-  }, [loadReports, currentType]);
+    loadReports();
+  }, [loadReports]);
 
-  // تحديث currentType عندما يتغير query parameter
+  // تحديث currentType عند تغيير query parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const typeFromQuery = searchParams.get('type');
@@ -126,7 +132,6 @@ const ReportsDashboard = () => {
 
   const handleTypeChange = (typeKey) => {
     setCurrentType(typeKey);
-    // تحديث الـ URL مع الحفاظ على ideaId وإضافة query parameter للنوع
     navigate(`/ideas/${ideaId}/reports?type=${typeKey}`, { replace: true });
   };
 
@@ -159,13 +164,13 @@ const ReportsDashboard = () => {
         <ErrorDisplay 
           error={error} 
           type="reports" 
-          onRetry={() => loadReports(currentType)} 
+          onRetry={loadReports} 
         />
       </div>
     );
   }
 
-  const currentReportType = reportTypes[currentType] || reportTypes.initial;
+  const currentReportType = reportTypes[currentType] || reportTypes.all;
 
   return (
     <div className="min-h-screen w-full bg-white">
@@ -212,6 +217,7 @@ const ReportsDashboard = () => {
                 {currentType === 'advanced' && 'Advanced evaluation reports before funding approval.'}
                 {currentType === 'launch_evaluation' && 'Reports evaluating the launch readiness and performance.'}
                 {currentType === 'post_launch_followup' && 'Follow-up reports after project launch.'}
+                {currentType === 'all' && 'All reports for this idea, including all stages.'}
               </p>
             </div>
             <div className="text-right">
@@ -227,15 +233,13 @@ const ReportsDashboard = () => {
             <ReportsGrid 
               reports={reports} 
               ideaInfo={ideaInfo} 
-              currentType={currentType}
             />
           ) : (
             <EmptyState 
-              message={`No ${currentReportType.label.toLowerCase()} found for this idea.`}
+              message={`No reports found for this idea.`}
               type={currentType}
               ideaId={ideaId}
               onAddReport={() => {
-                // يمكنك إضافة وظيفة لإضافة تقرير جديد هنا
                 console.log('Add new report for type:', currentType);
               }}
             />

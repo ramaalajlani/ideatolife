@@ -38,6 +38,33 @@ api.interceptors.response.use(
   }
 );
 
+export const fetchAllReports = async (ideaId) => {
+  try {
+    const response = await api.get(`/idea/${ideaId}/reports`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all reports:", error);
+
+    let errorMessage = "حدث خطأ أثناء تحميل جميع التقارير";
+
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage = "غير مصرح. يرجى تسجيل الدخول مرة أخرى.";
+      } else if (error.response.status === 403) {
+        errorMessage = "ليس لديك صلاحية لعرض هذه التقارير.";
+      } else if (error.response.status === 404) {
+        errorMessage = "لم يتم العثور على الفكرة أو التقارير.";
+      } else if (error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+    } else if (error.request) {
+      errorMessage = "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.";
+    }
+
+    throw new Error(errorMessage);
+  }
+};
+
 export const fetchReportsByStage = async (ideaId, stageType) => {
   try {
     let endpoint;
@@ -59,14 +86,14 @@ export const fetchReportsByStage = async (ideaId, stageType) => {
     }
 
     console.log(`Fetching reports from: ${endpoint}`); // للتصحيح
-    
+
     const response = await api.get(endpoint);
     return response.data;
   } catch (error) {
     console.error(`Error fetching ${stageType} reports:`, error);
-    
+
     let errorMessage = 'حدث خطأ أثناء تحميل التقارير';
-    
+
     if (error.response) {
       if (error.response.status === 401) {
         errorMessage = 'غير مصرح. يرجى تسجيل الدخول مرة أخرى.';
@@ -80,7 +107,7 @@ export const fetchReportsByStage = async (ideaId, stageType) => {
     } else if (error.request) {
       errorMessage = 'لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.';
     }
-    
+
     throw new Error(errorMessage);
   }
 };

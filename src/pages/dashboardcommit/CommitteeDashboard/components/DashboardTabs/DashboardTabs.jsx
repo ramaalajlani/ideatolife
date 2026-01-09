@@ -8,6 +8,7 @@ import FundingChecksTab from "./FundingChecksTab";
 import GanttChartTabs from "./GanttChartTabs";
 import LaunchRequestsTab from "./LaunchRequestsTab";
 import PostLaunchFollowupsTab from "./PostLaunchFollowupsTab"; // ✨ جديد
+import WithdrawalRequestsTab from "./WithdrawalRequests"; // ✨ جديد: تاب طلبات الانسحاب
 
 const DashboardTabs = ({
   activeTab,
@@ -18,6 +19,7 @@ const DashboardTabs = ({
   fundingChecks = [],
   launchRequests = [], // 🆕
   postLaunchFollowups = [], // ✨ جديد
+  withdrawalRequests = [], // ✨ جديد: بيانات طلبات الانسحاب
   getStatusBadge,
   onViewGanttChart,
   onRefresh,
@@ -63,6 +65,15 @@ const DashboardTabs = ({
       return (
         <PostLaunchFollowupsTab
           followups={postLaunchFollowups}
+          isLoading={isLoading}
+          refreshData={onRefresh}
+        />
+      );
+
+    case "withdrawals": // ✨ جديد: تاب طلبات الانسحاب
+      return (
+        <WithdrawalRequestsTab
+          withdrawalRequests={withdrawalRequests}
           isLoading={isLoading}
           refreshData={onRefresh}
         />
