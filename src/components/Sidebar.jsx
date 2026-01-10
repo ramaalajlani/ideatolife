@@ -372,7 +372,7 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
       {/* ← عنصر الشيكات الجديد */}
       <SidebarItem 
         icon={<DollarSign size={20} />}
-        text="Transactions"
+        text="My checks"
         name="transactions"
         active={activeItem === 'transactions'}
         onClick={handleItemClick}

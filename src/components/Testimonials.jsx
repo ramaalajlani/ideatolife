@@ -1,12 +1,14 @@
-import { testimonials } from "../constants";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 
+// Variants لظهور البطاقات
 const containerVariants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.5, // كل بطاقة تظهر بعد 0.5 ثانية
-      delayChildren: 0.2,   // بداية ظهور البطاقات بعد 0.2 ثانية
+      staggerChildren: 0.5,
+      delayChildren: 0.2,
     },
   },
 };
@@ -17,16 +19,65 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-    },
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
+// بيانات ستاتيك لبقية الحقول
+const staticData = {
+  bgColor: "bg-gray-800",
+  borderColor: "border-gray-700",
+  fontColor: "text-white",
+  titleClass: "text-lg font-semibold mb-4",
+  descClass: "text-gray-200",
+};
+
+// قائمة الأدوار الثابتة
+const fixedRoles = ["Economist", "Market", "Legal", "Technical", "Investor"];
+
 const Testimonials = () => {
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/admin/contents/index")
+      .then((res) => {
+        const filtered = res.data.filter((item) => item.type === "testimonial");
+        setTestimonials(filtered);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("AxiosError:", err);
+        setError("Failed to fetch testimonials");
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500 border-b-4 border-gray-700"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 mt-10">{error}</div>;
+  }
+
+  if (testimonials.length === 0) {
+    return (
+      <div className="text-center mt-20 text-gray-500">
+        No testimonials to display.
+      </div>
+    );
+  }
+
   return (
     <div className="mt-20 tracking-wide">
+      {/* العنوان مع نفس تصميم gradient للكود السابق */}
       <motion.h2
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -53,33 +104,38 @@ const Testimonials = () => {
             variants={itemVariants}
             className="w-full sm:w-1/2 lg:w-1/3 px-4 py-2"
           >
-            <div className="bg-gray-800 rounded-md p-6 text-md border border-gray-700 font-thin">
-              <p className="text-gray-200">{testimonial.text}</p>
+            <div
+              className={`${staticData.bgColor} rounded-md p-6 text-md border ${staticData.borderColor} font-thin flex flex-col items-center`}
+            >
+              {/* title */}
+              <h6 className={`${staticData.titleClass} text-center`}>
+                {testimonial.title}
+              </h6>
 
-              <div className="flex mt-8 items-start">
-                <div className="w-12 h-12 mr-6 rounded-full border border-gray-600 bg-gray-700 overflow-hidden flex items-center justify-center">
-                  {testimonial.image ? (
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.user}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-orange-500 to-orange-800 flex items-center justify-center text-white text-sm font-bold">
-                      {testimonial.user.split(' ').map(n => n[0]).join('')}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h6 className="text-lg font-semibold text-white">{testimonial.user}</h6>
-                  <span className="text-sm font-normal italic text-gray-400">
-                    {testimonial.role}
-                  </span>
-                </div>
+              {/* text */}
+              <p className={`${staticData.descClass} text-center`}>
+                {testimonial.text}
+              </p>
+
+              {/* الصورة داخل الدائرة */}
+              <div className="mt-6 w-16 h-16 rounded-full overflow-hidden border-2 border-orange-500 flex-shrink-0">
+                {testimonial.image ? (
+                  <img
+                    src={`http://localhost:8000/${testimonial.image}`}
+                    alt={testimonial.title || "testimonial"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white font-bold">
+                    S
+                  </div>
+                )}
               </div>
+
+              {/* وصف الدور ثابت ولكن متغير بالتتابع */}
+              <span className="italic text-gray-400 mt-2">
+                {fixedRoles[index % fixedRoles.length]}
+              </span>
             </div>
           </motion.div>
         ))}

@@ -17,6 +17,10 @@ const FollowupCard = ({
   const [reportData, setReportData] = useState(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [reportError, setReportError] = useState(null);
+  const [profitData, setProfitData] = useState(null);
+  const [loadingProfit, setLoadingProfit] = useState(false);
+  const [profitError, setProfitError] = useState(null);
+  const [showProfitDetails, setShowProfitDetails] = useState(false);
   
   // دالة لجلب التقرير من الـ API
   const fetchReport = async () => {
@@ -51,12 +55,53 @@ const FollowupCard = ({
     }
   };
 
+  // دالة لجلب بيانات توزيع الأرباح
+  const fetchProfitDistribution = async () => {
+    if (!item.idea.id) return;
+    
+    setLoadingProfit(true);
+    setProfitError(null);
+    
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/api/ideas/${item.idea.id}/profit-distribution-summary`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+      setProfitData(response.data);
+      setShowProfitDetails(true);
+    } catch (error) {
+      console.error('Error fetching profit distribution:', error);
+      if (error.response?.status === 403) {
+        setProfitError("غير مصرح لك بالوصول لهذه البيانات.");
+      } else if (error.response?.status !== 404) {
+        setProfitError(
+          error.response?.data?.message || 
+          'حدث خطأ أثناء جلب بيانات توزيع الأرباح.'
+        );
+      }
+    } finally {
+      setLoadingProfit(false);
+    }
+  };
+
   // جلب التقرير تلقائياً عند تحميل المكون
   useEffect(() => {
     if (f.status === "done" || f.status === "pending_review") {
       fetchReport();
     }
-  }, [f.id, item.idea.id, f.status, token]);
+    
+    // جلب بيانات الأرباح إذا كان التوزيع مكتملاً
+    if (f.profit_distributed) {
+      fetchProfitDistribution();
+    }
+  }, [f.id, item.idea.id, f.status, f.profit_distributed, token]);
   
   let cardColorClass = "bg-white";
   let statusColor = "bg-gray-100 text-gray-800";
@@ -101,6 +146,18 @@ const FollowupCard = ({
   const evaluationScore = reportData?.report?.evaluation_score !== undefined 
     ? reportData.report.evaluation_score 
     : f.evaluation_score;
+
+  // حساب مجموع النسب المئوية
+  const totalPercentage = profitData?.distributions?.reduce((sum, dist) => {
+    const percentage = parseFloat(dist.percentage);
+    return sum + (isNaN(percentage) ? 0 : percentage);
+  }, 0) || 0;
+
+  // حساب مجموع المبالغ
+  const totalAmount = profitData?.distributions?.reduce((sum, dist) => {
+    const amount = parseFloat(dist.amount);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0) || 0;
 
   return (
     <div key={f.id} className={`rounded-xl shadow-md overflow-hidden mb-8 border border-gray-200 ${cardColorClass}`} dir="ltr">
@@ -147,8 +204,177 @@ const FollowupCard = ({
               </div>
             )}
             {f.profit_distributed && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm font-bold">
-                SUCCESS: Profits have been successfully distributed to project participants.
+              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm font-bold flex justify-between items-center">
+                <span>
+                  ✅ SUCCESS: Profits have been successfully distributed to project participants.
+                </span>
+                <button
+                  onClick={() => {
+                    if (!profitData) {
+                      fetchProfitDistribution();
+                    } else {
+                      setShowProfitDetails(!showProfitDetails);
+                    }
+                  }}
+                  className="px-4 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold hover:bg-green-200 transition-colors"
+                >
+                  {showProfitDetails ? "Hide Details" : "View Distribution"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* قسم توزيع الأرباح */}
+        {f.profit_distributed && showProfitDetails && (
+          <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl overflow-hidden">
+            <div className="bg-green-100 px-6 py-4 border-b border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <h4 className="text-xl font-black text-green-900 uppercase tracking-tight">Profit Distribution Summary</h4>
+                </div>
+                {profitData && (
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-green-700">Total Distributed: ${totalAmount.toFixed(2)}</div>
+                    <div className="text-xs text-green-600">Total Percentage: {totalPercentage.toFixed(2)}%</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {loadingProfit ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-600 mx-auto mb-3"></div>
+                <p className="text-green-700 font-medium">Loading profit distribution data...</p>
+              </div>
+            ) : profitError ? (
+              <div className="p-6 bg-red-50 border border-red-200 text-red-800 rounded-lg m-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="font-bold">Error</span>
+                </div>
+                <p>{profitError}</p>
+              </div>
+            ) : profitData ? (
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Summary Cards */}
+                  <div className="bg-white rounded-xl border border-green-200 p-4 shadow-sm">
+                    <div className="text-xs font-bold text-gray-500 uppercase mb-2">Your Share</div>
+                    <div className="text-2xl font-black text-green-700">${profitData.your_amount}</div>
+                    <div className="text-sm text-green-600 mt-1">{profitData.owner_percentage} of total</div>
+                  </div>
+                  
+                  <div className="bg-white rounded-xl border border-green-200 p-4 shadow-sm">
+                    <div className="text-xs font-bold text-gray-500 uppercase mb-2">Status</div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span className="text-lg font-black text-green-700">Successfully Distributed</span>
+                    </div>
+                    <div className="text-sm text-green-600 mt-1">All participants have received their shares</div>
+                  </div>
+                </div>
+                
+                {/* Distribution Table */}
+                <div className="overflow-hidden border border-gray-200 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-green-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-black text-green-700 uppercase tracking-wider">Participant</th>
+                        <th className="px-6 py-3 text-left text-xs font-black text-green-700 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-black text-green-700 uppercase tracking-wider">Percentage</th>
+                        <th className="px-6 py-3 text-left text-xs font-black text-green-700 uppercase tracking-wider">Amount ($)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {profitData.distributions.map((distribution, idx) => (
+                        <tr 
+                          key={idx} 
+                          className={distribution.role === "idea_owner" ? "bg-green-50/50" : "hover:bg-gray-50"}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <span className="text-green-700 font-bold text-sm">
+                                  {distribution.user_name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="ml-3">
+                                <div className="text-sm font-bold text-gray-900">{distribution.user_name}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+                              distribution.role === "idea_owner" 
+                                ? "bg-green-100 text-green-800"
+                                : distribution.role === "investor"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-purple-100 text-purple-800"
+                            }`}>
+                              {distribution.role === "idea_owner" ? "Owner" : 
+                               distribution.role === "investor" ? "Investor" : 
+                               distribution.role === "admin" ? "Admin" : distribution.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                            {distribution.percentage}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-green-700">
+                            ${distribution.amount}
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {/* Total Row */}
+                      <tr className="bg-green-100 border-t-2 border-green-300">
+                        <td colSpan="2" className="px-6 py-4 whitespace-nowrap text-sm font-black text-green-900 uppercase">
+                          TOTAL
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-green-900">
+                          {totalPercentage.toFixed(2)}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-green-900">
+                          ${totalAmount.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Legend */}
+                <div className="mt-4 flex flex-wrap gap-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-100 rounded"></div>
+                    <span className="text-gray-600">Owner's share highlighted</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-100 rounded"></div>
+                    <span className="text-gray-600">Investor shares</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-100 rounded"></div>
+                    <span className="text-gray-600">Admin shares</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p className="text-gray-500 italic">No profit distribution data available</p>
+                <button 
+                  onClick={fetchProfitDistribution}
+                  className="mt-3 px-4 py-2 text-sm bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors font-bold"
+                >
+                  Load Distribution Data
+                </button>
               </div>
             )}
           </div>
