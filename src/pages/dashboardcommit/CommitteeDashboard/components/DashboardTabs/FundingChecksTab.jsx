@@ -3,11 +3,11 @@ import axios from "axios";
 import { CreditCard, User, FileText, DollarSign, Calendar, ArrowRight } from "lucide-react";
 
 const FundingChecksTab = () => {
-  const [checks, setChecks] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  const fetchChecks = async () => {
+  const fetchTransactions = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("committee_token");
@@ -20,22 +20,22 @@ const FundingChecksTab = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (res.data?.checks?.length > 0) {
-        setChecks(res.data.checks);
+      if (res.data?.transactions?.length > 0) {
+        setTransactions(res.data.transactions);
         setMessage("");
       } else {
-        setMessage("No checks available at the moment.");
+        setMessage("No transactions available at the moment.");
       }
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || "An error occurred while fetching checks.");
+      setMessage(err.response?.data?.message || "An error occurred while fetching transactions.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchChecks();
+    fetchTransactions();
   }, []);
 
   if (loading) {
@@ -43,7 +43,7 @@ const FundingChecksTab = () => {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center space-y-3">
           <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-gray-600 font-medium">Loading checks...</div>
+          <div className="text-gray-600 font-medium">Loading transactions...</div>
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ const FundingChecksTab = () => {
           <p className="text-gray-500 text-sm mt-1">Track all funding transfers and payments</p>
         </div>
         <button
-          onClick={fetchChecks}
+          onClick={fetchTransactions}
           className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
         >
           Refresh Data
@@ -70,7 +70,7 @@ const FundingChecksTab = () => {
         </div>
       )}
 
-      {checks.length > 0 ? (
+      {transactions.length > 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full">
@@ -118,25 +118,25 @@ const FundingChecksTab = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {checks.map((tx, index) => (
+                {transactions.map((tx, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6">
-                      <div className="font-medium text-gray-900">{tx.idea_title || "—"}</div>
+                      <div className="font-medium text-gray-900">{tx.idea?.title || "—"}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="text-sm text-gray-700">{tx.idea_owner || "—"}</div>
+                      <div className="text-sm text-gray-700">{tx.from || "—"}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="text-sm text-gray-700">{tx.investor || "—"}</div>
+                      <div className="text-sm text-gray-700">{tx.to || "—"}</div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="font-bold text-gray-900">${tx.amount}</div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm bg-gray-100 px-3 py-1 rounded">{tx.from}</span>
+                        <span className="text-sm bg-gray-100 px-3 py-1 rounded">{tx.direction === "outgoing" ? tx.from : tx.to}</span>
                         <ArrowRight className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm bg-gray-100 px-3 py-1 rounded">{tx.to}</span>
+                        <span className="text-sm bg-gray-100 px-3 py-1 rounded">{tx.direction === "outgoing" ? tx.to : tx.from}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -159,7 +159,7 @@ const FundingChecksTab = () => {
           </div>
           <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
             <div className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{checks.length}</span> transactions
+              Showing <span className="font-semibold">{transactions.length}</span> transactions
             </div>
           </div>
         </div>

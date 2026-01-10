@@ -38,16 +38,19 @@ const LoginRoute = () => {
     setErrors({});
 
     try {
-      const response = await axios.post(
+      const res = await axios.post(
         'http://127.0.0.1:8000/api/login/idea-owner',
         formData
       );
 
-      if (response.data?.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+      // تعديل هنا ليحفظ التوكن واليوزر مثل صفحة التسجيل
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
 
         navigate('/profile'); // نفس المنطق المطلوب
+      } else {
+        setError(res.data?.message || 'Login failed. Please try again.');
       }
 
     } catch (err) {

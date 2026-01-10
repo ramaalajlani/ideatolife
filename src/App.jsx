@@ -35,6 +35,7 @@ import LoginCommitteeMember from './pages/dashboardcommit/CommitteeDashboard/Log
 import CommitteeDashboard from "./pages/dashboardcommit/CommitteeDashboard";
 import Notifications from './components/Notifications/Notifications';
 import DashboardSidebar from './pages/dashboardcommit/CommitteeDashboard/components/DashboardSidebar/DashboardSidebar';
+import IdeaOwnerTransactions from "./pages/IdeaOwnerTransactions";
 
 // Context
 import { IdeaProvider } from './context/IdeaContext';
@@ -147,6 +148,15 @@ const App = () => {
     <Notifications />
   </LayoutWrapper>
 } />
+<Route 
+  path="transactions" 
+  element={
+    <LayoutWrapper activeItem="transactions">
+      <IdeaOwnerTransactions />
+    </LayoutWrapper>
+  } 
+/>
+
 
                 {/* صفحة 404 */}
                 <Route path="*" element={

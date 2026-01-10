@@ -180,9 +180,13 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedFunding.type === "funding" ? "Funding Request" : "Task/Phase"} Evaluation
-                </h3>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+  Funding Evaluation
+  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full capitalize">
+    {selectedFunding.type}
+  </span>
+</h3>
+
                 <p className="text-sm text-gray-500 mt-1">{selectedFunding.idea?.title}</p>
               </div>
               <button 

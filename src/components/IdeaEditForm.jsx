@@ -30,10 +30,7 @@ const IdeaEditForm = () => {
       try {
         setFetching(true);
         const token = localStorage.getItem("token");
-        
-        if (!token) {
-          throw new Error("Please login to continue");
-        }
+        if (!token) throw new Error("Please login to continue");
 
         const response = await fetch(`http://127.0.0.1:8000/api/my_ideas`, {
           method: 'GET',
@@ -43,18 +40,12 @@ const IdeaEditForm = () => {
           }
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to verify idea status");
-        }
+        if (!response.ok) throw new Error("Failed to verify idea status");
 
         const result = await response.json();
-        const targetIdea = result.ideas?.find(idea => 
-          idea.id.toString() === ideaId.toString()
-        );
+        const targetIdea = result.ideas?.find(idea => idea.id.toString() === ideaId.toString());
 
-        if (!targetIdea) {
-          throw new Error("Idea not found or you don't have permission to edit it");
-        }
+        if (!targetIdea) throw new Error("Idea not found or you don't have permission to edit it");
 
         if (targetIdea.status !== 'needs_revision') {
           setErrorMessage(`You can only edit ideas that need revision. Current status: ${targetIdea.status}`);
@@ -93,27 +84,24 @@ const IdeaEditForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // التحقق من الحقول الإلزامية
     if (!formData.termsAccepted) {
       setErrorMessage("Please accept the terms and conditions");
       return;
     }
-    
-    // Check only required fields
     if (!formData.title.trim() || !formData.description.trim()) {
       setErrorMessage("Title and description are required");
       return;
     }
-    
+
     setLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Please login to continue");
-      }
+      if (!token) throw new Error("Please login to continue");
 
       const apiData = {
         title: formData.title,
@@ -139,17 +127,15 @@ const IdeaEditForm = () => {
       } catch {
         result = { message: "Idea updated successfully" };
       }
-      
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to update idea");
-      }
-      
+
+      if (!response.ok) throw new Error(result.message || "Failed to update idea");
+
       setSuccessMessage("✓ Idea has been successfully revised and updated!");
-      
+
       setTimeout(() => {
         navigate(`/ideas/${ideaId}/roadmap`);
       }, 2000);
-      
+
     } catch (err) {
       setErrorMessage(err.message || "Failed to update idea. Please try again.");
     } finally {
@@ -169,6 +155,7 @@ const IdeaEditForm = () => {
           onChange={handleInputChange}
           placeholder={field.placeholder}
           className={`${commonClasses} resize-none`}
+          required={field.required}
         />
       );
     }
@@ -181,17 +168,18 @@ const IdeaEditForm = () => {
         onChange={handleInputChange}
         placeholder={field.placeholder}
         className={commonClasses}
+        required={field.required}
       />
     );
   };
 
   const fields = [
-    { id: "title", label: "Revised Idea Title", type: "text", placeholder: "Enter the revised title of your idea" },
-    { id: "description", label: "Revised Idea Description", type: "textarea", placeholder: "Describe your revised idea in detail", rows: 4 },
-    { id: "problem", label: "Revised Problem Statement", type: "textarea", placeholder: "What problem does your revised idea solve?", rows: 3 },
-    { id: "solution", label: "Revised Proposed Solution", type: "textarea", placeholder: "How does your revised idea solve this problem?", rows: 3 },
-    { id: "target_audience", label: "Revised Target Audience", type: "text", placeholder: "Who will benefit from your revised idea?" },
-    { id: "additional_notes", label: "Additional Notes", type: "textarea", placeholder: "Any additional notes about the revisions you made", rows: 3 }
+    { id: "title", label: "Revised Idea Title", type: "text", placeholder: "Enter the revised title of your idea", required: true },
+    { id: "description", label: "Revised Idea Description", type: "textarea", placeholder: "Describe your revised idea in detail", rows: 4, required: true },
+    { id: "problem", label: "Revised Problem Statement", type: "textarea", placeholder: "What problem does your revised idea solve?", rows: 3, required: false },
+    { id: "solution", label: "Revised Proposed Solution", type: "textarea", placeholder: "How does your revised idea solve this problem?", rows: 3, required: false },
+    { id: "target_audience", label: "Revised Target Audience", type: "text", placeholder: "Who will benefit from your revised idea?", required: false },
+    { id: "additional_notes", label: "Additional Notes", type: "textarea", placeholder: "Any additional notes about the revisions you made", rows: 3, required: false }
   ];
 
   if (fetching) {
@@ -224,14 +212,11 @@ const IdeaEditForm = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-orange-50 via-pink-50 to-purple-100 m-0 p-0">
       <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2">
-        {/* Left side - Lottie Animation at the top */}
+        {/* Left side - Lottie Animation */}
         <div className="w-full h-full flex flex-col items-center bg-[#FFE2AF] p-8">
-          {/* Animation container */}
           <div className="w-80 h-80 lg:w-96 lg:h-96">
             <Lottie animationData={GetAnIdea} loop className="w-full h-full" />
           </div>
-          
-          {/* Guidelines - below animation */}
           <div className="text-center lg:text-left max-w-xs text-gray-700 mt-8">
             <h2 className="text-2xl font-bold mb-4">Revision Guidelines</h2>
             <p className="mb-2">1. Start fresh - Rewrite your idea completely</p>
@@ -245,7 +230,7 @@ const IdeaEditForm = () => {
         <div className="w-full h-full flex flex-col justify-center items-center p-10 lg:p-16 bg-[#FFF8F0]">
           <div className="w-full max-w-xl">
             <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center lg:text-left">Edit Idea</h1>
-            
+
             {ideaStatus === 'needs_revision' && (
               <div className="mb-6 bg-yellow-50 text-yellow-800 px-6 py-4 rounded-xl shadow">
                 <p className="font-bold">Important: Complete Rewrite Required</p>
@@ -268,7 +253,7 @@ const IdeaEditForm = () => {
               {fields.map(f => (
                 <div key={f.id} className="space-y-2">
                   <label htmlFor={f.id} className="block text-gray-700 font-semibold">
-                    {f.label}
+                    {f.label} {f.required && <span className="text-red-500">*</span>}
                   </label>
                   {renderField(f)}
                 </div>
@@ -282,6 +267,7 @@ const IdeaEditForm = () => {
                   checked={formData.termsAccepted}
                   onChange={handleInputChange}
                   className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-400 mt-1 flex-shrink-0"
+                  required
                 />
                 <label htmlFor="termsAccepted" className="text-gray-700 leading-relaxed">
                   <span className="font-bold">I confirm that:</span>
@@ -291,6 +277,7 @@ const IdeaEditForm = () => {
                   2. All information entered is new and improved
                   <br />
                   3. I understand this will replace the previous version of my idea
+                  <span className="text-red-500">*</span>
                 </label>
               </div>
 

@@ -7,7 +7,8 @@ import {
   Calendar,
   BarChart3,
   Map,
-  Home
+  Home,
+  DollarSign
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import profileService from '../services/profileService';
@@ -89,10 +90,10 @@ export default function Sidebar({ children, activeItem = 'home' }) {
     const path = location.pathname;
     const ideaMatch = path.match(/\/ideas\/(\d+)/);
     if (ideaMatch) {
-      localStorage.setItem('lastIdeaId', ideaMatch[1]); // حفظ آخر ideaId معروف
+      localStorage.setItem('lastIdeaId', ideaMatch[1]); 
       return ideaMatch[1];
     }
-    return localStorage.getItem('lastIdeaId'); // استرجاع آخر ideaId عند الانتقال من إشعارات
+    return localStorage.getItem('lastIdeaId'); 
   };
 
   const handleLogout = () => {
@@ -304,6 +305,7 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
       'reports': ideaIdToUse ? `/ideas/${ideaIdToUse}/reports` : '/reports',
       'meetings': ideaIdToUse ? `/ideas/${ideaIdToUse}/meetings` : '/meetings',
       'notifications': '/notifications',
+      'transactions': '/transactions', // ← أضفنا الشيكات هنا
     };
 
     if (routes[name]) {
@@ -365,6 +367,15 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
         onClick={handleItemClick}
         ideaId={targetIdeaId}
         badge={unreadCount > 0 ? unreadCount : null}
+      />
+
+      {/* ← عنصر الشيكات الجديد */}
+      <SidebarItem 
+        icon={<DollarSign size={20} />}
+        text="Transactions"
+        name="transactions"
+        active={activeItem === 'transactions'}
+        onClick={handleItemClick}
       />
     </>
   );

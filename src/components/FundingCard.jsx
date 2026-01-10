@@ -275,7 +275,71 @@ const FundingRequestsCard = () => {
   // Funding Requests Tab Content
   const renderFundingRequests = () => (
     <div className="space-y-8">
-      {/* New Funding Request Section */}
+      {/* Active Funding Requests List - NOW SHOWN FIRST */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-200 p-8">
+        <h3 className="text-2xl font-bold text-green-800 mb-6">Active Funding Requests</h3>
+        <div className="space-y-4">
+          {fundings && fundings.length > 0 ? (
+            fundings.map((funding) => (
+              <div key={funding.funding_id} className="flex items-center justify-between p-6 border border-green-200 rounded-lg hover:bg-green-50 transition-all duration-200">
+                <div>
+                  <div className="font-semibold text-gray-800 text-lg">Funding Request #{funding.funding_id}</div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Requested Amount: {funding.requested_amount?.toLocaleString()} SYP
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    Status: <span className={`font-medium ${
+                      funding.status === 'approved' ? 'text-green-600' :
+                      funding.status === 'rejected' ? 'text-red-600' :
+                      funding.status === 'cancelled' ? 'text-gray-600' :
+                      'text-orange-600'
+                    }`}>
+                      {funding.status === 'approved' ? 'Approved' :
+                       funding.status === 'rejected' ? 'Rejected' :
+                       funding.status === 'cancelled' ? 'Cancelled' :
+                       funding.status === 'under_review' ? 'Under Review' :
+                       funding.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {funding.status === 'requested' || funding.status === 'under_review' ? (
+                    <button
+                      onClick={() => openCancelModal(funding.funding_id)}
+                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                    >
+                      Cancel Request
+                    </button>
+                  ) : null}
+                  <div className="text-right">
+                    {funding.approved_amount ? (
+                      <>
+                        <div className="font-semibold text-lg text-green-700">
+                          {funding.approved_amount.toLocaleString()} SYP
+                        </div>
+                        <div className="text-sm text-gray-600">Approved Amount</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-semibold text-lg text-orange-700">
+                          {funding.requested_amount?.toLocaleString()} SYP
+                        </div>
+                        <div className="text-sm text-gray-600">Requested Amount</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              No funding requests currently
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* New Funding Request Section - NOW SHOWN AFTER ACTIVE REQUESTS */}
       <div className="bg-white rounded-2xl shadow-2xl border border-orange-200 overflow-hidden">
         <div className="bg-gradient-to-r from-black to-gray-900 text-white p-8">
           <div className="flex justify-between items-center">
@@ -315,7 +379,7 @@ const FundingRequestsCard = () => {
                     required
                     min="1"
                   />
-                  <p className="text-sm text-green-600 mt-2">💡 No restrictions - Request any amount you need</p>
+                  <p className="text-sm text-green-600 mt-2">No restrictions - Request any amount you need</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -425,70 +489,6 @@ const FundingRequestsCard = () => {
             )}
           </div>
         )}
-      </div>
-
-      {/* Active Funding Requests List */}
-      <div className="bg-white rounded-2xl shadow-lg border border-green-200 p-8">
-        <h3 className="text-2xl font-bold text-green-800 mb-6">Active Funding Requests</h3>
-        <div className="space-y-4">
-          {fundings && fundings.length > 0 ? (
-            fundings.map((funding) => (
-              <div key={funding.funding_id} className="flex items-center justify-between p-6 border border-green-200 rounded-lg hover:bg-green-50 transition-all duration-200">
-                <div>
-                  <div className="font-semibold text-gray-800 text-lg">Funding Request #{funding.funding_id}</div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Requested Amount: {funding.requested_amount?.toLocaleString()} SYP
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    Status: <span className={`font-medium ${
-                      funding.status === 'approved' ? 'text-green-600' :
-                      funding.status === 'rejected' ? 'text-red-600' :
-                      funding.status === 'cancelled' ? 'text-gray-600' :
-                      'text-orange-600'
-                    }`}>
-                      {funding.status === 'approved' ? 'Approved' :
-                       funding.status === 'rejected' ? 'Rejected' :
-                       funding.status === 'cancelled' ? 'Cancelled' :
-                       funding.status === 'under_review' ? 'Under Review' :
-                       funding.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  {funding.status === 'requested' || funding.status === 'under_review' ? (
-                    <button
-                      onClick={() => openCancelModal(funding.funding_id)}
-                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                    >
-                      Cancel Request
-                    </button>
-                  ) : null}
-                  <div className="text-right">
-                    {funding.approved_amount ? (
-                      <>
-                        <div className="font-semibold text-lg text-green-700">
-                          {funding.approved_amount.toLocaleString()} SYP
-                        </div>
-                        <div className="text-sm text-gray-600">Approved Amount</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="font-semibold text-lg text-orange-700">
-                          {funding.requested_amount?.toLocaleString()} SYP
-                        </div>
-                        <div className="text-sm text-gray-600">Requested Amount</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-600">
-              No funding requests currently
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

@@ -138,6 +138,46 @@ const LaunchIdea = () => {
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-12">
+
+        {/* My Launch Requests – نقلنا هذا القسم للأعلى */}
+        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+          <h2 className="text-2xl font-bold mb-4">My Launch Requests</h2>
+
+          {loadingRequests && <p>Loading launch requests...</p>}
+          {requestError && <p className="text-red-600">{requestError}</p>}
+          {!loadingRequests && !myLaunchRequests.length && <p>No launch requests found.</p>}
+
+          {myLaunchRequests.length > 0 && (
+            <ul className="space-y-4">
+              {myLaunchRequests.map((req) => (
+                <li key={req.id} className="border p-4 rounded-lg shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h3 className="font-semibold">{req.idea.title}</h3>
+                    <p>Status: <strong>{req.status}</strong></p>
+                    <p>Submitted at: {new Date(req.created_at).toLocaleString()}</p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => openDecisionModal(req.idea.id)}
+                      className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                    >
+                      View Decision
+                    </button>
+                    {req.status === "approved" && (
+                      <button
+                        onClick={() => handleRequestFunding(req.idea.id)}
+                        className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+                      >
+                        Request Funding
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Launch Request Form */}
         <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
           <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
@@ -200,45 +240,6 @@ const LaunchIdea = () => {
               {loading ? "Submitting Launch Request..." : "Submit Launch Request"}
             </button>
           </form>
-        </div>
-
-        {/* My Launch Requests */}
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-          <h2 className="text-2xl font-bold mb-4">My Launch Requests</h2>
-
-          {loadingRequests && <p>Loading launch requests...</p>}
-          {requestError && <p className="text-red-600">{requestError}</p>}
-          {!loadingRequests && !myLaunchRequests.length && <p>No launch requests found.</p>}
-
-          {myLaunchRequests.length > 0 && (
-            <ul className="space-y-4">
-              {myLaunchRequests.map((req) => (
-                <li key={req.id} className="border p-4 rounded-lg shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <h3 className="font-semibold">{req.idea.title}</h3>
-                    <p>Status: <strong>{req.status}</strong></p>
-                    <p>Submitted at: {new Date(req.created_at).toLocaleString()}</p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => openDecisionModal(req.idea.id)}
-                      className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-                    >
-                      View Decision
-                    </button>
-                    {req.status === "approved" && (
-                      <button
-                        onClick={() => handleRequestFunding(req.idea.id)}
-                        className="px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-                      >
-                        Request Funding
-                      </button>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </div>
 

@@ -76,7 +76,7 @@ const IdeaSubmissionForm = () => {
           onChange={handleInputChange}
           placeholder={field.placeholder}
           className={`${commonClasses} resize-none`}
-          required
+          required={field.required}
         />
       );
     }
@@ -89,18 +89,19 @@ const IdeaSubmissionForm = () => {
         onChange={handleInputChange}
         placeholder={field.placeholder}
         className={commonClasses}
-        required
+        required={field.required}
       />
     );
   };
 
+  // تحديث الـ fields مع الإشارة إلى الحقول الإجبارية والاختيارية
   const fields = [
-    { id: "title", label: "Idea Title", type: "text", placeholder: "Enter your idea title" },
-    { id: "description", label: "Idea Description", type: "textarea", placeholder: "Describe your idea in detail", rows: 4 },
-    { id: "problem", label: "Problem Statement", type: "textarea", placeholder: "What problem does this idea solve?", rows: 3 },
-    { id: "solution", label: "Proposed Solution", type: "textarea", placeholder: "How does your idea solve this problem?", rows: 3 },
-    { id: "targetAudience", label: "Target Audience", type: "text", placeholder: "Who will benefit from this idea?" },
-    { id: "additionalNotes", label: "Additional Notes", type: "textarea", placeholder: "Any additional info", rows: 3 }
+    { id: "title", label: "Idea Title", type: "text", placeholder: "Enter your idea title", required: true },
+    { id: "description", label: "Idea Description", type: "textarea", placeholder: "Describe your idea in detail", rows: 4, required: true },
+    { id: "problem", label: "Problem Statement", type: "textarea", placeholder: "What problem does this idea solve? (Optional)", rows: 3, required: false },
+    { id: "solution", label: "Proposed Solution", type: "textarea", placeholder: "How does your idea solve this problem? (Optional)", rows: 3, required: false },
+    { id: "targetAudience", label: "Target Audience", type: "text", placeholder: "Who will benefit from this idea? (Optional)", required: false },
+    { id: "additionalNotes", label: "Additional Notes", type: "textarea", placeholder: "Any additional info (Optional)", rows: 3, required: false }
   ];
 
   return (
@@ -114,6 +115,7 @@ const IdeaSubmissionForm = () => {
           </div>
           <div className="text-center lg:text-left max-w-xs text-gray-700">
             <h2 className="text-2xl font-bold mb-4">Instructions</h2>
+            <p className="mb-2"><span className="font-bold text-red-500">*</span> Required fields: Title, Description</p>
             <p className="mb-2">1. Be clear and concise about your idea.</p>
             <p className="mb-2">2. Explain the problem your idea solves.</p>
             <p className="mb-2">3. Describe your proposed solution.</p>
@@ -125,7 +127,10 @@ const IdeaSubmissionForm = () => {
         {/* القسم الأيمن للنموذج */}
         <div className="w-full h-full flex flex-col justify-center items-center p-10 lg:p-16 bg-[#FFF8F0]">
           <div className="w-full max-w-xl">
-            <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center lg:text-left">Submit Your Idea</h1>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center lg:text-left">Submit Your Idea</h1>
+            <p className="text-gray-600 mb-8 text-center lg:text-left">
+              Fields marked with <span className="text-red-500 font-bold">*</span> are required
+            </p>
 
             {successMessage && (
               <div className="mb-6 bg-green-50 text-green-800 px-6 py-4 rounded-xl shadow">
@@ -141,12 +146,14 @@ const IdeaSubmissionForm = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {fields.map(f => (
                 <div key={f.id} className="space-y-2">
-                  <label htmlFor={f.id} className="block text-gray-700 font-semibold">{f.label}</label>
+                  <label htmlFor={f.id} className="block text-gray-700 font-semibold">
+                    {f.label} {f.required && <span className="text-red-500">*</span>}
+                  </label>
                   {renderField(f)}
                 </div>
               ))}
 
-              <div className="flex items-start space-x-3 p-4">
+              <div className="flex items-start space-x-3 p-4 bg-orange-50 rounded-xl">
                 <input
                   type="checkbox"
                   id="termsAccepted"
@@ -157,7 +164,7 @@ const IdeaSubmissionForm = () => {
                   required
                 />
                 <label htmlFor="termsAccepted" className="text-gray-700 leading-relaxed">
-                  I agree to the terms and conditions.
+                  <span className="text-red-500 font-bold">*</span> I agree to the terms and conditions.
                 </label>
               </div>
 
