@@ -22,7 +22,7 @@ const FollowupCard = ({
   const [profitError, setProfitError] = useState(null);
   const [showProfitDetails, setShowProfitDetails] = useState(false);
   
-  // دالة لجلب التقرير من الـ API
+  // Function to fetch report from API
   const fetchReport = async () => {
     if (!f.id || !item.idea.id) return;
     
@@ -47,7 +47,7 @@ const FollowupCard = ({
       if (error.response?.status !== 404) {
         setReportError(
           error.response?.data?.message || 
-          'حدث خطأ أثناء جلب التقرير. يرجى المحاولة مرة أخرى.'
+          'An error occurred while fetching the report. Please try again.'
         );
       }
     } finally {
@@ -55,7 +55,7 @@ const FollowupCard = ({
     }
   };
 
-  // دالة لجلب بيانات توزيع الأرباح
+  // Function to fetch profit distribution data
   const fetchProfitDistribution = async () => {
     if (!item.idea.id) return;
     
@@ -79,11 +79,11 @@ const FollowupCard = ({
     } catch (error) {
       console.error('Error fetching profit distribution:', error);
       if (error.response?.status === 403) {
-        setProfitError("غير مصرح لك بالوصول لهذه البيانات.");
+        setProfitError("You are not authorized to access this data.");
       } else if (error.response?.status !== 404) {
         setProfitError(
           error.response?.data?.message || 
-          'حدث خطأ أثناء جلب بيانات توزيع الأرباح.'
+          'An error occurred while fetching profit distribution data.'
         );
       }
     } finally {
@@ -91,13 +91,13 @@ const FollowupCard = ({
     }
   };
 
-  // جلب التقرير تلقائياً عند تحميل المكون
+  // Automatically fetch report when component loads
   useEffect(() => {
     if (f.status === "done" || f.status === "pending_review") {
       fetchReport();
     }
     
-    // جلب بيانات الأرباح إذا كان التوزيع مكتملاً
+    // Fetch profit data if distribution is complete
     if (f.profit_distributed) {
       fetchProfitDistribution();
     }
@@ -125,11 +125,11 @@ const FollowupCard = ({
   let decisionText = f.committee_decision || "No decision yet";
   
   const decisionMap = {
-    graduate: "Graduate",
-    continue: "Continue",
-    extra_support: "Extra Support",
+    graduate: "Graduate Project",
+    continue: "Continue Operations",
+    extra_support: "Extra Support Required",
     pivot_required: "Pivot Required",
-    terminate: "Terminate"
+    terminate: "Terminate Project"
   };
 
   if (f.committee_decision) {
@@ -142,22 +142,52 @@ const FollowupCard = ({
   const requiresOwnerInput = f.status === "pending" && (!f.active_users || !f.revenue || !f.growth_rate);
   const requiresOwnerResponse = f.committee_decision && !f.owner_acknowledged && f.status === "done";
 
-  // حساب Evaluation Score من التقرير إذا كان موجوداً
+  // Calculate Evaluation Score from report if available
   const evaluationScore = reportData?.report?.evaluation_score !== undefined 
     ? reportData.report.evaluation_score 
     : f.evaluation_score;
 
-  // حساب مجموع النسب المئوية
+  // Calculate total percentages
   const totalPercentage = profitData?.distributions?.reduce((sum, dist) => {
     const percentage = parseFloat(dist.percentage);
     return sum + (isNaN(percentage) ? 0 : percentage);
   }, 0) || 0;
 
-  // حساب مجموع المبالغ
+  // Calculate total amounts
   const totalAmount = profitData?.distributions?.reduce((sum, dist) => {
     const amount = parseFloat(dist.amount);
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0) || 0;
+
+  // Help Tooltip Components
+  const HelpTooltip = ({ text, children }) => (
+    <div className="relative group inline-block">
+      <div className="cursor-help text-gray-400 hover:text-blue-500 inline-flex items-center">
+        {children}
+        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <div className="invisible group-hover:visible absolute z-10 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 transform -translate-x-1/2 mb-2">
+        <div className="text-center font-medium">{text}</div>
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-8 border-transparent border-t-gray-900"></div>
+      </div>
+    </div>
+  );
+
+  // Info Label Components with help
+  const InfoLabel = ({ label, value, description, icon, color = "text-gray-700" }) => (
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1 mb-1">
+        <span className="text-xs font-bold text-gray-500">{label}</span>
+        {description && <HelpTooltip text={description} />}
+      </div>
+      <div className="flex items-center gap-2">
+        {icon && <span className={icon}></span>}
+        <span className={`text-sm font-medium ${color}`}>{value}</span>
+      </div>
+    </div>
+  );
 
   return (
     <div key={f.id} className={`rounded-xl shadow-md overflow-hidden mb-8 border border-gray-200 ${cardColorClass}`} dir="ltr">
@@ -182,7 +212,12 @@ const FollowupCard = ({
           
           {f.committee_decision && (
             <div className="text-right">
-              <div className="text-xs font-bold text-gray-400 uppercase mb-1">Committee Decision</div>
+              <div className="text-xs font-bold text-gray-400 uppercase mb-1 flex items-center gap-1 justify-end">
+                Committee Decision
+                <HelpTooltip text="The final decision made by the follow-up committee regarding your project">
+                  <span></span>
+                </HelpTooltip>
+              </div>
               <span className={`px-6 py-2 text-sm font-black rounded-lg uppercase shadow-sm ${decisionColor}`}>
                 {decisionText}
               </span>
@@ -194,20 +229,37 @@ const FollowupCard = ({
         {(requiresOwnerInput || requiresOwnerResponse || f.profit_distributed) && (
           <div className="mb-6 space-y-2">
             {requiresOwnerInput && (
-              <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg text-sm font-bold">
-                ATTENTION: Please submit the required follow-up data before the deadline.
+              <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.33 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <span>ATTENTION: Please submit the required follow-up data before the deadline.</span>
+                <HelpTooltip text="This data is essential for evaluating your project's performance and making appropriate decisions by the committee">
+                  <span></span>
+                </HelpTooltip>
               </div>
             )}
             {requiresOwnerResponse && (
-              <div className="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded-lg text-sm font-bold">
-                ACTION REQUIRED: Please respond to the committee decision and acknowledge review.
+              <div className="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+                </svg>
+                <span>ACTION REQUIRED: Please respond to the committee decision and acknowledge review.</span>
+                <HelpTooltip text="Your response is important for understanding the committee's decision and planning next steps for your project">
+                  <span></span>
+                </HelpTooltip>
               </div>
             )}
             {f.profit_distributed && (
               <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm font-bold flex justify-between items-center">
-                <span>
-                  ✅ SUCCESS: Profits have been successfully distributed to project participants.
-                </span>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span>
+                    ✅ SUCCESS: Profits have been successfully distributed to project participants.
+                  </span>
+                </div>
                 <button
                   onClick={() => {
                     if (!profitData) {
@@ -216,16 +268,19 @@ const FollowupCard = ({
                       setShowProfitDetails(!showProfitDetails);
                     }
                   }}
-                  className="px-4 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold hover:bg-green-200 transition-colors"
+                  className="px-4 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold hover:bg-green-200 transition-colors flex items-center gap-1"
                 >
                   {showProfitDetails ? "Hide Details" : "View Distribution"}
+                  <HelpTooltip text="View details of profit distribution among project participants">
+                    <span></span>
+                  </HelpTooltip>
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* قسم توزيع الأرباح */}
+        {/* Profit Distribution Section */}
         {f.profit_distributed && showProfitDetails && (
           <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl overflow-hidden">
             <div className="bg-green-100 px-6 py-4 border-b border-green-200">
@@ -265,13 +320,23 @@ const FollowupCard = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Summary Cards */}
                   <div className="bg-white rounded-xl border border-green-200 p-4 shadow-sm">
-                    <div className="text-xs font-bold text-gray-500 uppercase mb-2">Your Share</div>
+                    <div className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                      Your Share
+                      <HelpTooltip text="The financial amount you received as the project founder">
+                        <span></span>
+                      </HelpTooltip>
+                    </div>
                     <div className="text-2xl font-black text-green-700">${profitData.your_amount}</div>
                     <div className="text-sm text-green-600 mt-1">{profitData.owner_percentage} of total</div>
                   </div>
                   
                   <div className="bg-white rounded-xl border border-green-200 p-4 shadow-sm">
-                    <div className="text-xs font-bold text-gray-500 uppercase mb-2">Status</div>
+                    <div className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                      Status
+                      <HelpTooltip text="Status of the profit distribution process">
+                        <span></span>
+                      </HelpTooltip>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 bg-green-500 rounded-full"></span>
                       <span className="text-lg font-black text-green-700">Successfully Distributed</span>
@@ -380,10 +445,10 @@ const FollowupCard = ({
           </div>
         )}
 
-        {/* جميع البيانات - تقسيم إلى أقسام */}
+        {/* All Data - Divided into sections */}
         <div className="space-y-8">
           
-          {/* القسم الأول: المؤشرات الرئيسية */}
+          {/* First Section: Key Indicators */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Key Performance Indicators */}
@@ -391,24 +456,49 @@ const FollowupCard = ({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Key Performance Indicators</th>
+                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">
+                      Key Performance Indicators
+                      <HelpTooltip text="The core metrics used by the committee to evaluate your project's performance">
+                        <span></span>
+                      </HelpTooltip>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2">Active Users</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2 flex items-center gap-1">
+                      <span>Active Users</span>
+                      <HelpTooltip text="Number of users who regularly use your product during the follow-up period">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-black text-gray-900">{f.active_users ?? "N/A"}</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Revenue ($)</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Revenue ($)</span>
+                      <HelpTooltip text="Total income generated by your project during the follow-up period">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-black text-gray-900">{f.revenue ? `$${f.revenue}` : "N/A"}</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Growth Rate (%)</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Growth Rate (%)</span>
+                      <HelpTooltip text="Percentage growth in key metrics compared to the previous period">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-black text-gray-900">{f.growth_rate ? `${f.growth_rate}%` : "N/A"}</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Evaluation Score</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Evaluation Score</span>
+                      <HelpTooltip text="Final evaluation score given by the committee based on all criteria">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-black text-blue-600">
                       {evaluationScore !== null && evaluationScore !== undefined 
                         ? `${parseFloat(evaluationScore)}/100` 
@@ -424,12 +514,22 @@ const FollowupCard = ({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Performance & Status</th>
+                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">
+                      Performance & Status
+                      <HelpTooltip text="Your project's performance status based on the committee's comprehensive evaluation">
+                        <span></span>
+                      </HelpTooltip>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2">Performance Status</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2 flex items-center gap-1">
+                      <span>Performance Status</span>
+                      <HelpTooltip text="Qualitative assessment of your project's performance based on all indicators">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-bold uppercase">
                       <span className={`px-2 py-1 rounded ${f.performance_status === 'excellent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                         {f.performance_status?.replace('_', ' ') || "-"}
@@ -437,7 +537,12 @@ const FollowupCard = ({
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Risk Level</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Risk Level</span>
+                      <HelpTooltip text="Assessment of the risk level facing your project based on the report">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-bold uppercase">
                       <span className={`px-2 py-1 rounded ${
                         f.risk_level === 'low' ? 'bg-green-100 text-green-800' :
@@ -450,13 +555,23 @@ const FollowupCard = ({
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Project Stability</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Project Stability</span>
+                      <HelpTooltip text="Is your project operating stably without major technical or operational issues?">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className={`px-4 py-3 text-sm font-black ${f.is_stable ? "text-green-600" : "text-orange-500"}`}>
                       {f.is_stable ? "STABLE" : "UNSTABLE"}
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Reviewed By</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Reviewed By</span>
+                      <HelpTooltip text="Name of the committee member who reviewed and evaluated your project">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium">{f.reviewed_by?.name || "Pending Review"}</td>
                   </tr>
                 </tbody>
@@ -468,12 +583,22 @@ const FollowupCard = ({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Committee & Owner</th>
+                    <th colSpan="2" className="px-4 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-widest">
+                      Committee & Owner Info
+                      <HelpTooltip text="Information about owner interaction with committee decisions and recommendations">
+                        <span></span>
+                      </HelpTooltip>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2">Owner Acknowledged</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 w-1/2 flex items-center gap-1">
+                      <span>Owner Acknowledged</span>
+                      <HelpTooltip text="Has the owner reviewed and responded to the committee's decision?">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${f.owner_acknowledged ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                         {f.owner_acknowledged ? "YES" : "NO"}
@@ -481,13 +606,23 @@ const FollowupCard = ({
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Graduation Date</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Graduation Date</span>
+                      <HelpTooltip text="Date the project graduated from the follow-up program if the decision was to graduate">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {f.graduation_date ? new Date(f.graduation_date).toLocaleDateString('en-US') : "Not Graduated"}
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Marketing Support</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Marketing Support</span>
+                      <HelpTooltip text="Did the project receive marketing support from the committee during this period?">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${f.marketing_support_given ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                         {f.marketing_support_given ? "GIVEN" : "NOT GIVEN"}
@@ -495,7 +630,12 @@ const FollowupCard = ({
                     </td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50">Product Issue</td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-500 bg-gray-50/50 flex items-center gap-1">
+                      <span>Product Issue</span>
+                      <HelpTooltip text="Were any product issues detected during the committee review?">
+                        <span></span>
+                      </HelpTooltip>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${f.product_issue_detected ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
                         {f.product_issue_detected ? "DETECTED" : "NO ISSUES"}
@@ -507,13 +647,16 @@ const FollowupCard = ({
             </div>
           </div>
 
-          {/* القسم الثاني: الوصف والاستجابات */}
+          {/* Second Section: Description & Responses */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Risk Description Box */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b">
+              <div className="bg-gray-50 px-4 py-3 border-b flex items-center gap-1">
                 <label className="text-xs font-black text-gray-500 uppercase">Risk Description & Analysis</label>
+                <HelpTooltip text="Analysis of potential risks identified for your project during the follow-up period">
+                  <span></span>
+                </HelpTooltip>
               </div>
               <div className="p-4 bg-white text-sm text-gray-700 min-h-[120px]">
                 {f.risk_description ? (
@@ -526,8 +669,11 @@ const FollowupCard = ({
 
             {/* Owner Response Box */}
             <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b">
+              <div className="bg-gray-50 px-4 py-3 border-b flex items-center gap-1">
                 <label className="text-xs font-black text-gray-500 uppercase">Owner's Official Response</label>
+                <HelpTooltip text="Owner's response to the committee's decision and recommendations">
+                  <span></span>
+                </HelpTooltip>
               </div>
               <div className="p-4 bg-white min-h-[120px]">
                 {f.owner_response ? (
@@ -547,36 +693,64 @@ const FollowupCard = ({
             </div>
           </div>
 
-          {/* القسم الثالث: معلومات إضافية بدون IDs */}
+          {/* Third Section: Additional Information */}
           <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b">
+            <div className="bg-gray-50 px-4 py-3 border-b flex items-center gap-1">
               <label className="text-xs font-black text-gray-500 uppercase">Follow-up Details</label>
+              <HelpTooltip text="Additional information about the follow-up session and its details">
+                <span></span>
+              </HelpTooltip>
             </div>
             <div className="p-4 bg-white">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Phase</span>
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Phase</span>
+                    <HelpTooltip text="Current phase of project follow-up">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
                   <span className="text-sm font-medium text-gray-800 capitalize">{f.phase?.replace('_', ' ')}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Scheduled Date</span>
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Scheduled Date</span>
+                    <HelpTooltip text="Scheduled date for the follow-up session">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
                   <span className="text-sm text-gray-800">{new Date(f.scheduled_date).toLocaleDateString('en-US')}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Status</span>
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Status</span>
+                    <HelpTooltip text="Status of the current follow-up session">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
                   <span className={`text-sm font-bold px-2 py-1 rounded w-max ${statusColor}`}>
                     {statusText}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Profit Distribution</span>
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Profit Distribution</span>
+                    <HelpTooltip text="Status of profit distribution to project participants">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
                   <span className={`text-sm font-bold px-2 py-1 rounded w-max ${f.profit_distributed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                     {f.profit_distributed ? "COMPLETED" : "PENDING"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Follow-up Type</span>
-                  <span className="text-sm text-gray-800 capitalize">
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Follow-up Type</span>
+                    <HelpTooltip text="Type of follow-up session based on the time phase">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
+                  <span className="text-sm text-gray-800">
                     {f.phase === 'week_1' ? 'Weekly Follow-up' :
                      f.phase === 'month_1' ? 'Monthly Follow-up (1st Month)' :
                      f.phase === 'month_3' ? 'Quarterly Follow-up' :
@@ -585,7 +759,12 @@ const FollowupCard = ({
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-500 mb-1">Review Status</span>
+                  <span className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span>Review Status</span>
+                    <HelpTooltip text="Status of committee review for the project">
+                      <span></span>
+                    </HelpTooltip>
+                  </span>
                   <span className="text-sm font-medium text-gray-800">
                     {f.reviewed_by?.name ? `Reviewed by ${f.reviewed_by.name}` : "Awaiting Review"}
                   </span>
@@ -595,7 +774,7 @@ const FollowupCard = ({
           </div>
         </div>
 
-        {/* قسم التقرير الرسمي */}
+        {/* Official Report Section */}
         {(f.status === "done" || f.status === "pending_review") && (
           <div className="mt-8 border-t-2 border-dashed pt-8">
             <div className="flex justify-between items-center mb-4">
@@ -628,19 +807,34 @@ const FollowupCard = ({
                 <div className="bg-gradient-to-r from-blue-50 to-gray-50 border border-blue-100 rounded-xl p-5 mb-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="text-xs font-bold text-gray-500 uppercase mb-1">Report Status</div>
+                      <div className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                        Report Status
+                        <HelpTooltip text="Status of the official follow-up report">
+                          <span></span>
+                        </HelpTooltip>
+                      </div>
                       <div className={`text-sm font-black ${reportData.report.status === 'done' ? 'text-green-600' : 'text-blue-600'}`}>
                         {reportData.report.status === 'done' ? 'Completed' : reportData.report.status}
                       </div>
                     </div>
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="text-xs font-bold text-gray-500 uppercase mb-1">Report Date</div>
+                      <div className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                        Report Date
+                        <HelpTooltip text="Date the official report was created">
+                          <span></span>
+                        </HelpTooltip>
+                      </div>
                       <div className="text-sm font-black text-gray-900">
                         {new Date(reportData.report.created_at).toLocaleDateString('en-US')}
                       </div>
                     </div>
                     <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="text-xs font-bold text-gray-500 uppercase mb-1">Meeting Date</div>
+                      <div className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                        Meeting Date
+                        <HelpTooltip text="Date of the follow-up meeting with the committee">
+                          <span></span>
+                        </HelpTooltip>
+                      </div>
                       <div className="text-sm font-black text-gray-900">
                         {reportData.report.meeting?.meeting_date 
                           ? new Date(reportData.report.meeting.meeting_date).toLocaleDateString('en-US')
@@ -651,7 +845,12 @@ const FollowupCard = ({
                   
                   {reportData.report.description && (
                     <div className="mb-4">
-                      <div className="text-xs font-bold text-gray-500 uppercase mb-2">Report Summary</div>
+                      <div className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1">
+                        Report Summary
+                        <HelpTooltip text="Comprehensive summary of the evaluation and key recommendations">
+                          <span></span>
+                        </HelpTooltip>
+                      </div>
                       <div className="text-sm text-gray-800 bg-white p-4 rounded-lg border border-gray-200 leading-relaxed">
                         {reportData.report.description}
                       </div>
@@ -661,9 +860,9 @@ const FollowupCard = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {[
-                    { label: "Strengths", val: reportData.report.strengths, icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
-                    { label: "Weaknesses", val: reportData.report.weaknesses, icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" },
-                    { label: "Recommendations", val: reportData.report.recommendations, icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" }
+                    { label: "Strengths", val: reportData.report.strengths, icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", desc: "Key strengths that distinguish your project" },
+                    { label: "Weaknesses", val: reportData.report.weaknesses, icon: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z", desc: "Weaknesses that need improvement" },
+                    { label: "Recommendations", val: reportData.report.recommendations, icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", desc: "Committee recommendations for improvement and development" }
                   ].map((box, i) => (
                     box.val && box.val.trim() !== "" && (
                       <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
@@ -671,9 +870,14 @@ const FollowupCard = ({
                           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={box.icon}></path>
                           </svg>
-                          <span className="text-sm font-black text-gray-800 uppercase">{box.label}</span>
+                          <span className="text-sm font-black text-gray-800 uppercase flex items-center gap-1">
+                            {box.label}
+                            <HelpTooltip text={box.desc}>
+                              <span></span>
+                            </HelpTooltip>
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line pl-7">
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                           {box.val}
                         </p>
                       </div>
@@ -687,9 +891,14 @@ const FollowupCard = ({
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                       </svg>
-                      <span className="text-xs font-bold uppercase opacity-80">Meeting Notes</span>
+                      <span className="text-xs font-bold uppercase opacity-80 flex items-center gap-1">
+                        Meeting Notes
+                        <HelpTooltip text="Important notes discussed during the follow-up meeting">
+                          <span></span>
+                        </HelpTooltip>
+                      </span>
                     </div>
-                    <p className="text-sm italic leading-relaxed pl-7">
+                    <p className="text-sm italic leading-relaxed">
                       {reportData.report.meeting.notes}
                     </p>
                     {reportData.report.meeting.meeting_date && (
@@ -705,7 +914,12 @@ const FollowupCard = ({
                     Report generated on: {new Date(reportData.report.created_at).toLocaleDateString('en-US')}
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-bold text-gray-500 uppercase">Final Evaluation Score</div>
+                    <div className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                      Final Evaluation Score
+                      <HelpTooltip text="The final score your project received in the comprehensive evaluation">
+                        <span></span>
+                      </HelpTooltip>
+                    </div>
                     <div className="text-2xl font-black text-blue-600">{parseFloat(reportData.report.evaluation_score)}/100</div>
                   </div>
                 </div>
@@ -733,7 +947,12 @@ const FollowupCard = ({
             <h4 className="text-xl font-black uppercase mb-4 tracking-tight">Update Follow-up Data</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Active Users *</label>
+                <label className="block text-xs font-bold uppercase text-gray-400 mb-2 flex items-center gap-1">
+                  Active Users *
+                  <HelpTooltip text="Number of users who regularly use your product during the follow-up period">
+                    <span></span>
+                  </HelpTooltip>
+                </label>
                 <input
                   type="number"
                   value={f.active_users || ""}
@@ -743,7 +962,12 @@ const FollowupCard = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Revenue ($) *</label>
+                <label className="block text-xs font-bold uppercase text-gray-400 mb-2 flex items-center gap-1">
+                  Revenue ($) *
+                  <HelpTooltip text="Total income generated by your project during the follow-up period">
+                    <span></span>
+                  </HelpTooltip>
+                </label>
                 <input
                   type="number"
                   value={f.revenue || ""}
@@ -753,7 +977,12 @@ const FollowupCard = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Growth Rate (%) *</label>
+                <label className="block text-xs font-bold uppercase text-gray-400 mb-2 flex items-center gap-1">
+                  Growth Rate (%) *
+                  <HelpTooltip text="Percentage growth in key metrics compared to the previous period">
+                    <span></span>
+                  </HelpTooltip>
+                </label>
                 <input
                   type="number"
                   value={f.growth_rate || ""}
@@ -763,12 +992,23 @@ const FollowupCard = ({
                 />
               </div>
             </div>
+            <div className="text-xs text-gray-400 mb-4">
+              * This data is required by the committee to evaluate your project's performance and make appropriate decisions
+            </div>
             <button
               onClick={() => handleUpdate(f.id, index)}
               disabled={updating || (!f.active_users || !f.revenue || !f.growth_rate)}
-              className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-30"
+              className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-30 flex items-center justify-center gap-2"
             >
-              {updating ? "Submitting..." : "Submit to Committee"}
+              {updating ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </>
+              ) : "Submit to Committee"}
             </button>
           </div>
         )}
@@ -789,9 +1029,12 @@ const FollowupCard = ({
             </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-3">
+              <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-1">
                 Your Official Response
                 <span className="text-red-500 ml-1">*</span>
+                <HelpTooltip text="Share your thoughts and reactions to the committee's decision and their recommendations">
+                  <span></span>
+                </HelpTooltip>
               </label>
               <textarea
                 value={ownerResponse}

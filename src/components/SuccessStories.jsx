@@ -1,12 +1,12 @@
-import React from 'react';
-import { successStories } from "../constants";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 
 const containerVariants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.3, // كل بطاقة تظهر بعد الأخرى
+      staggerChildren: 0.3,
       delayChildren: 0.2,
     },
   },
@@ -26,9 +26,34 @@ const itemVariants = {
 };
 
 const SuccessStories = () => {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get("http://127.0.0.1:8000/api/graduated-projects")
+      .then((res) => {
+        setProjects(res.data.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-xl text-gray-500">
+        Loading success stories...
+      </div>
+    );
+  }
+
   return (
     <section className="mt-20 bg-white py-16">
       <div className="container mx-auto px-4">
+        {/* العنوان */}
         <div className="text-center mb-12">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
@@ -53,6 +78,7 @@ const SuccessStories = () => {
           </motion.p>
         </div>
 
+        {/* البطاقات */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -60,68 +86,76 @@ const SuccessStories = () => {
           viewport={{ once: true }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
-          {successStories.map((story, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              whileHover={{ y: -10, scale: 1.02 }} // تأثير القفز عند الهوفر
-              className="group relative cursor-pointer overflow-hidden bg-white px-6 pt-10 pb-8 shadow-xl ring-1 ring-gray-900/5 transition-all duration-300 sm:mx-auto sm:rounded-lg"
-            >
-              {/* الدائرة المتحركة في الخلفية */}
-              <span className="absolute top-10 z-0 h-20 w-20 rounded-full bg-gradient-to-r from-orange-500 to-orange-800 transition-all duration-300 group-hover:scale-[10]"></span>
+          {projects.map((project, index) => {
+            const initials = project.owner.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase();
 
-              <div className="relative z-10 mx-auto">
-                {/* الصورة */}
-                <div className="relative -mt-6 h-56 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-orange-800 bg-clip-border text-white shadow-lg mb-6">
-                  <img
-                    src={story.image}
-                    alt={story.project}
-                    className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
-                  />
-                </div>
+            return (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ y: -10, scale: 1.02 }}
+                className="group relative cursor-pointer overflow-hidden bg-white px-6 pt-10 pb-8 shadow-xl ring-1 ring-gray-900/5 transition-all duration-300 sm:mx-auto sm:rounded-lg"
+              >
+                {/* الخلفية */}
+                <span className="absolute top-10 z-0 h-20 w-20 rounded-full bg-gradient-to-r from-orange-500 to-orange-800 transition-all duration-300 group-hover:scale-[10]" />
 
-                {/* معلومات المستخدم */}
-                <div className="flex items-center mb-4">
-                  <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-r from-orange-500 to-orange-800 transition-all duration-300 group-hover:bg-[#FEEE91] text-white font-bold text-lg">
-                    {story.initials}
+                <div className="relative z-10 mx-auto">
+                  {/* الصورة */}
+                  <div className="relative -mt-6 h-56 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-orange-800 shadow-lg mb-6">
+                    <img
+                      src="https://via.placeholder.com/400x300?text=Graduated+Project"
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
+                    />
                   </div>
-                  <div className="ml-4">
-                    <h5 className="text-xl font-semibold text-gray-900 transition-all duration-300 group-hover:text-[#FEEE91]">
-                      {story.name}
-                    </h5>
-                    <p className="text-orange-600 font-medium transition-all duration-300 group-hover:text-[#FEEE91]">
-                      {story.project}
-                    </p>
-                  </div>
-                </div>
 
-                {/* القصة */}
-                <div className="space-y-4 pt-2 text-base leading-7 text-gray-600 transition-all duration-300 group-hover:text-white/90">
-                  <p className="line-clamp-3">{story.story}</p>
-                </div>
+                  {/* المستخدم */}
+                  <div className="flex items-center mb-4">
+                    <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-r from-orange-500 to-orange-800 text-white font-bold text-lg">
+                      {initials}
+                    </div>
+                    <div className="ml-4">
+                      <h5 className="text-xl font-semibold text-gray-900 group-hover:text-[#FEEE91]">
+                        {project.owner.name}
+                      </h5>
+                      <p className="text-orange-600 font-medium group-hover:text-[#FEEE91]">
+                        {project.title}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* التمويل والمدة */}
-                <div className="flex justify-between items-center text-sm text-gray-500 mb-4 mt-4 transition-all duration-300 group-hover:text-white/80">
-                  <div>
-                    <span className="font-semibold">Funding:</span> {story.funding}
-                  </div>
-                  <div>
-                    <span className="font-semibold">Duration:</span> {story.duration}
-                  </div>
-                </div>
+                  {/* القصة */}
+                  <p className="text-gray-600 group-hover:text-white/90 line-clamp-3">
+                    This project successfully graduated from the platform and
+                    became an independent business.
+                  </p>
 
-                {/* التقييم والزر */}
-                <div className="flex justify-between items-center mt-6">
-                  <div className="text-yellow-400 text-lg transition-all duration-300 group-hover:text-yellow-300">
-                    {"★".repeat(story.rating)}
+                  {/* معلومات إضافية */}
+                  <div className="flex justify-between items-center text-sm text-gray-500 mt-4 group-hover:text-white/80">
+                    <div>
+                      <span className="font-semibold">Committee:</span>{" "}
+                      {project.committee?.name || "N/A"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Graduated:</span>{" "}
+                      {project.graduation_date}
+                    </div>
                   </div>
-                  <button className="select-none rounded-lg bg-gradient-to-r from-orange-500 to-orange-800 py-2 px-6 text-center font-sans text-sm font-bold uppercase text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 focus:opacity-85 active:opacity-85 group-hover:bg-[#FEEE91]">
-                    Read More
-                  </button>
+
+                  {/* زر */}
+                  <div className="flex justify-end mt-6">
+                    <button className="rounded-lg bg-gradient-to-r from-orange-500 to-orange-800 py-2 px-6 text-sm font-bold uppercase text-white transition-all hover:scale-105">
+                      Read More
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>

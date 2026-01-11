@@ -24,6 +24,8 @@ const FundingRequestsCard = () => {
   const [error, setError] = useState(null);
   const [selectedFundingId, setSelectedFundingId] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showAmountGuide, setShowAmountGuide] = useState(false);
+  const [showJustificationGuide, setShowJustificationGuide] = useState(false);
 
   // Fetch funding data
   useEffect(() => {
@@ -225,6 +227,137 @@ const FundingRequestsCard = () => {
 
   const { fundings, idea_title } = fundingData;
 
+  // User Guide Components
+  const AmountInputGuide = () => (
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-4">
+      <div className="flex items-start gap-3">
+        <div className="bg-blue-100 p-2 rounded-lg">
+          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h4 className="font-bold text-blue-800 mb-2">💰 Amount Input Guide</h4>
+          <ul className="text-blue-700 text-sm space-y-1">
+            <li>• Enter the amount in Syrian Pounds only (no need to write SYP)</li>
+            <li>• Use numbers only without commas or dots</li>
+            <li>• You can request any amount - there are no limits</li>
+            <li>• Make sure the amount is realistic and justifiable</li>
+            <li className="font-semibold">Example: 100000 (one hundred thousand pounds)</li>
+          </ul>
+          <button 
+            onClick={() => setShowAmountGuide(false)}
+            className="mt-3 text-blue-600 text-sm hover:text-blue-800"
+          >
+            Got it, Hide Guide
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const JustificationGuide = () => (
+    <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 mb-4">
+      <div className="flex items-start gap-3">
+        <div className="bg-purple-100 p-2 rounded-lg">
+       
+        </div>
+        <div>
+          <h4 className="font-bold text-purple-800 mb-2">Justification Writing Guide</h4>
+          <ul className="text-purple-700 text-sm space-y-1">
+            <li>• Explain in detail how the funds will be used</li>
+            <li>• Specify the spending timeline</li>
+            <li>• Mention the expected benefits for the project</li>
+            <li>• Avoid general information and focus on your specific needs</li>
+            <li>• Maximum: 1000 characters</li>
+          </ul>
+          <div className="mt-3 bg-white p-3 rounded-lg border border-purple-100">
+            <p className="text-purple-600 text-xs font-semibold">Good Example:</p>
+            <p className="text-purple-700 text-xs">"I need 100,000 pounds to purchase basic manufacturing equipment and cover labor salaries for 3 months, which will enable us to start production and increase revenues by 40%"</p>
+          </div>
+          <button 
+            onClick={() => setShowJustificationGuide(false)}
+            className="mt-3 text-purple-600 text-sm hover:text-purple-800"
+          >
+            Got it, Hide Guide
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const RequirementsExplanation = () => (
+    <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="bg-green-100 p-2 rounded-lg">
+          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h4 className="font-bold text-green-800"> Eligibility Requirements Explanation</h4>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div className="bg-white p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="font-semibold text-green-700">Business Plan Completed</span>
+          </div>
+          <p className="text-gray-600 text-xs">Must complete the full business plan before applying for funding</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="font-semibold text-green-700">Minimum Score Achieved</span>
+          </div>
+          <p className="text-gray-600 text-xs">Must achieve the minimum score in the evaluation</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="font-semibold text-green-700">No Pending Requests</span>
+          </div>
+          <p className="text-gray-600 text-xs">Cannot submit a new request while there is a request under review</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="font-semibold text-green-700">Committee Assigned</span>
+          </div>
+          <p className="text-gray-600 text-xs">A committee must be assigned to evaluate the funding request</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const StatusGuide = () => (
+    <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+      <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Request Status Guide
+      </h4>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+          <div className="font-semibold text-green-700">Approved </div>
+          <p className="text-green-600 text-xs">Request has been approved and is ready for disbursement</p>
+        </div>
+        <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+          <div className="font-semibold text-orange-700">Under Review </div>
+          <p className="text-orange-600 text-xs">Request is being studied by the committee</p>
+        </div>
+        <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+          <div className="font-semibold text-red-700">Rejected </div>
+          <p className="text-red-600 text-xs">Request has been rejected based on evaluation</p>
+        </div>
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="font-semibold text-gray-700">Cancelled </div>
+          <p className="text-gray-600 text-xs">Request was cancelled by the user</p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Header Component with animation
   const renderHeader = () => (
     <div className="mb-8">
@@ -237,6 +370,46 @@ const FundingRequestsCard = () => {
             <p className="text-xl text-gray-800 mb-6">
               Get the funding you need for your project <span className="font-bold text-green-700">"{idea_title}"</span>
             </p>
+            
+            {/* Quick Guide Section */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 mb-6 border border-orange-200 shadow-lg">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Quick User Guide
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="bg-green-100 p-1 rounded mt-0.5">
+                    <span className="text-green-600 font-bold">1</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">Check Requirements</span>
+                    <p className="text-gray-600 text-xs">Ensure all green conditions are completed</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="bg-blue-100 p-1 rounded mt-0.5">
+                    <span className="text-blue-600 font-bold">2</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">Fill the Form</span>
+                    <p className="text-gray-600 text-xs">Enter amount and justifications accurately</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="bg-purple-100 p-1 rounded mt-0.5">
+                    <span className="text-purple-600 font-bold">3</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">Track Request</span>
+                    <p className="text-gray-600 text-xs">Review your request status in active requests list</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex items-center gap-4 mb-6">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg">
                 <span className="text-green-700 font-bold text-lg"> Unlimited Amount</span>
@@ -277,13 +450,33 @@ const FundingRequestsCard = () => {
     <div className="space-y-8">
       {/* Active Funding Requests List - NOW SHOWN FIRST */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-200 p-8">
-        <h3 className="text-2xl font-bold text-green-800 mb-6">Active Funding Requests</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold text-green-800">Active Funding Requests</h3>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Approved</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+              <span>Under Review</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <span>Rejected</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Status Guide */}
+        {StatusGuide()}
+        
         <div className="space-y-4">
           {fundings && fundings.length > 0 ? (
             fundings.map((funding) => (
               <div key={funding.funding_id} className="flex items-center justify-between p-6 border border-green-200 rounded-lg hover:bg-green-50 transition-all duration-200">
                 <div>
-                  <div className="font-semibold text-gray-800 text-lg">Funding Request #{funding.funding_id}</div>
+                  <div className="font-semibold text-gray-800 text-lg">Funding Request {funding.funding_id}</div>
                   <div className="text-sm text-gray-600 mt-1">
                     Requested Amount: {funding.requested_amount?.toLocaleString()} SYP
                   </div>
@@ -306,8 +499,11 @@ const FundingRequestsCard = () => {
                   {funding.status === 'requested' || funding.status === 'under_review' ? (
                     <button
                       onClick={() => openCancelModal(funding.funding_id)}
-                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-2"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                       Cancel Request
                     </button>
                   ) : null}
@@ -347,28 +543,46 @@ const FundingRequestsCard = () => {
               <div className="text-2xl font-bold tracking-tight">NEW FUNDING REQUEST</div>
               <div className="text-sm text-orange-300 mt-1">Submit Your Funding Application</div>
             </div>
-            <button
-              onClick={() => setShowFundingForm(!showFundingForm)}
-              disabled={fundings?.some(f => f.status === 'requested' || f.status === 'under_review')}
-              className={`px-6 py-3 ${
-                fundings?.some(f => f.status === 'requested' || f.status === 'under_review')
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-orange-500 hover:bg-orange-600'
-              } text-white rounded-lg font-semibold transition-all duration-200 shadow-md`}
-            >
-              {showFundingForm ? "Cancel Application" : "Apply for Funding"}
-            </button>
+            <div className="flex items-center gap-4">
+  
+              <button
+                onClick={() => setShowFundingForm(!showFundingForm)}
+                disabled={fundings?.some(f => f.status === 'requested' || f.status === 'under_review')}
+                className={`px-6 py-3 ${
+                  fundings?.some(f => f.status === 'requested' || f.status === 'under_review')
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-orange-500 hover:bg-orange-600'
+                } text-white rounded-lg font-semibold transition-all duration-200 shadow-md`}
+              >
+                {showFundingForm ? "Cancel Application" : "Apply for Funding"}
+              </button>
+            </div>
           </div>
         </div>
 
         {showFundingForm ? (
           <div className="p-8">
             <form onSubmit={handleSubmitFunding} className="space-y-8">
+              {/* Amount Guide */}
+              {showAmountGuide && <AmountInputGuide />}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Requested Amount (SYP)
-                  </label>
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Requested Amount (SYP)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAmountGuide(!showAmountGuide)}
+                      className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {showAmountGuide ? 'Hide Guide' : 'Show Guide'}
+                    </button>
+                  </div>
                   <input
                     type="number"
                     name="requested_amount"
@@ -379,7 +593,10 @@ const FundingRequestsCard = () => {
                     required
                     min="1"
                   />
-                  <p className="text-sm text-green-600 mt-2">No restrictions - Request any amount you need</p>
+                  <div className="mt-2">
+                    <p className="text-sm text-green-600">No restrictions - Request any amount you need</p>
+                    <p className="text-xs text-gray-500">Enter numbers only (e.g., 50000, 100000, 250000)</p>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -387,15 +604,31 @@ const FundingRequestsCard = () => {
                   </label>
                   <div className="px-4 py-3 bg-orange-50 rounded-lg border border-orange-200">
                     <div className="font-semibold text-gray-800">{idea_title}</div>
-                    <div className="text-sm text-gray-600 mt-1">Idea #{ideaId}</div>
+                    <div className="text-sm text-gray-600 mt-1">Idea {ideaId}</div>
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">This field is automatically filled with your project information</p>
                 </div>
               </div>
 
+              {/* Justification Guide */}
+              {showJustificationGuide && <JustificationGuide />}
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Justification for Funding
-                </label>
+                <div className="flex items-center gap-2 mb-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Justification for Funding
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowJustificationGuide(!showJustificationGuide)}
+                    className="text-purple-600 hover:text-purple-800 text-xs flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {showJustificationGuide ? 'Hide Guide' : 'Show Guide'}
+                  </button>
+                </div>
                 <textarea
                   name="justification"
                   value={formData.justification}
@@ -406,40 +639,64 @@ const FundingRequestsCard = () => {
                   required
                   maxLength="1000"
                 />
-                <div className="text-sm text-orange-600 mt-2">
-                  {formData.justification.length}/1000 characters
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-sm text-orange-600">
+                    {formData.justification.length}/1000 characters
+                  </div>
+                  <p className="text-xs text-gray-500">Be specific about how funds will be allocated and timeline</p>
                 </div>
               </div>
 
               {/* Requirements Check */}
               {fundingRequirements && (
                 <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-                  <div className="text-lg font-semibold text-green-800 mb-4">Application Requirements</div>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-lg font-semibold text-green-800">Application Requirements</div>
+                    <button
+                      onClick={() => setShowAmountGuide(false)}
+                      className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Requirements Guide
+                    </button>
+                  </div>
+                  
+                  {/* Requirements Explanation */}
+                  {RequirementsExplanation()}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className={`w-2 h-2 rounded-full ${fundingRequirements.business_plan_completed ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">Business Plan Completed</span>
+                      <span className="text-gray-700"> Use actual numbers and percentages</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className={`w-2 h-2 rounded-full ${fundingRequirements.minimum_score_achieved ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">Minimum Score Achieved</span>
+                      <span className="text-gray-700">Explain how each expense will lead to revenue growth</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className={`w-2 h-2 rounded-full ${fundingRequirements.no_pending_requests ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">No Pending Requests</span>
+                      <span className="text-gray-700">Explain your backup plan if you don't get the full amount</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className={`w-2 h-2 rounded-full ${fundingRequirements.committee_assigned ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">Committee Assigned</span>
+                      <span className="text-gray-700">Don't request less than needed or more than reasonable</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className={`w-2 h-2 rounded-full ${fundingRequirements.investor_available ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-gray-700">Investor Available</span>
+                      <span className="text-gray-700">Check your communications regularly</span>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-gray-700">Score: {fundingRequirements.business_plan_score}%</span>
+                      <span className="text-gray-700">Emergency Fund</span>
                     </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-700">
+                      <span className="font-semibold">Note:</span> All requirements must show green dots before you can submit your funding request.
+                    </p>
                   </div>
                 </div>
               )}
@@ -694,22 +951,47 @@ const FundingRequestsCard = () => {
         </div>
       </div>
 
-      {/* Cancel Funding Modal */}
+      {/* Cancel Funding Modal with Guide */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Cancel Funding Request</h3>
+            
+            {/* Cancellation Guide */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.342 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-semibold">Important:</span> You can only cancel requests that are "Requested" or "Under Review". Once cancelled, you cannot undo this action.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <p className="text-gray-600 mb-6">
               Are you sure you want to cancel this funding request? You can write a reason (optional).
             </p>
-            <textarea
-              value={cancellationData.cancellation_reason}
-              onChange={handleCancelReasonChange}
-              rows="3"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-6"
-              placeholder="Cancellation reason (optional)..."
-              maxLength="500"
-            />
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cancellation Reason (Optional)
+              </label>
+              <textarea
+                value={cancellationData.cancellation_reason}
+                onChange={handleCancelReasonChange}
+                rows="3"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2"
+                placeholder="Explain why you're cancelling this request..."
+                maxLength="500"
+              />
+              <p className="text-xs text-gray-500">
+                {cancellationData.cancellation_reason.length}/500 characters - This helps us understand your decision
+              </p>
+            </div>
+            
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => {

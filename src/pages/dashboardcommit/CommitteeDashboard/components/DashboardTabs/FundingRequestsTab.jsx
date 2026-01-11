@@ -10,26 +10,21 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
   const [committeeNotes, setCommitteeNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Get status badge with support for Funding type or Task/Phase
   const localGetStatusBadge = getStatusBadge || ((status, type) => {
     const base = "px-3 py-1 rounded-full text-sm font-medium ";
-    
     const mappingNormal = {
       pending: "bg-orange-50 text-orange-600",
       approved: "bg-emerald-50 text-emerald-600",
       rejected: "bg-red-50 text-red-600",
     };
-
     const mappingTask = {
       pending: "bg-blue-50 text-blue-600",
       approved: "bg-indigo-50 text-indigo-600",
       rejected: "bg-rose-50 text-rose-600",
     };
-
     if (type === "task" || type === "phase") {
       return base + (mappingTask[status] || "bg-gray-50 text-gray-600");
     }
-
     return base + (mappingNormal[status] || "bg-gray-50 text-gray-600");
   });
 
@@ -174,171 +169,167 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
         </table>
       </div>
 
- {/* Evaluation Modal */}
-{selectedFunding && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Evaluation Modal */}
+      {selectedFunding && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
 
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            Funding Evaluation
-            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full capitalize">
-              {selectedFunding.type}
-            </span>
-          </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            {selectedFunding.idea?.title}
-          </p>
-        </div>
-
-        <button
-          onClick={() => setSelectedFunding(null)}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="p-6 space-y-4 overflow-y-auto">
-
-        {/* Info */}
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-gray-500">Request ID</p>
-              <p className="text-sm font-medium text-gray-900">
-                {selectedFunding.funding_id}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500">Request Type</p>
-              <p className="text-sm font-medium text-gray-900 capitalize">
-                {selectedFunding.type}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500">Owner</p>
-              <p className="text-sm font-medium text-gray-900">
-                {selectedFunding.idea?.owner?.name}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500">Current Status</p>
-              <span className={localGetStatusBadge(selectedFunding.status, selectedFunding.type)}>
-                {selectedFunding.status}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Requested Amount */}
-        {selectedFunding.type === "funding" && (
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <div>
-                <p className="text-xs text-blue-600">Requested Amount</p>
-                <p className="text-lg font-bold text-blue-900">
-                  ${selectedFunding.requested_amount}
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  Funding Evaluation
+                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full capitalize">
+                    {selectedFunding.type}
+                  </span>
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedFunding.idea?.title}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-blue-400" />
+
+              <button
+                onClick={() => setSelectedFunding(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* Form */}
-        <div className="space-y-4">
+            {/* Body */}
+            <div className="p-6 space-y-4 overflow-y-auto">
 
-          {/* Decision */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Evaluation Decision
-            </label>
-            <select
-              value={isApproved}
-              onChange={(e) => setIsApproved(e.target.value === "true")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-            >
-              <option value="true">Approved</option>
-              <option value="false">Rejected</option>
-            </select>
-          </div>
+              {/* Info */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Request ID</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {selectedFunding.funding_id}
+                    </p>
+                  </div>
 
-          {/* Approved Amount (Optional) */}
-          {selectedFunding.type === "funding" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Approved Amount <span className="text-gray-400">(optional)</span>
-              </label>
+                  <div>
+                    <p className="text-xs text-gray-500">Request Type</p>
+                    <p className="text-sm font-medium text-gray-900 capitalize">
+                      {selectedFunding.type}
+                    </p>
+                  </div>
 
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={approvedAmount}
-                  onChange={(e) => setApprovedAmount(e.target.value)}
-                  disabled={!isApproved}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg
-                             focus:ring-2 focus:ring-orange-500 focus:border-transparent
-                             outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="Enter approved amount"
-                />
+                  <div>
+                    <p className="text-xs text-gray-500">Owner</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {selectedFunding.idea?.owner?.name}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Current Status</p>
+                    <span className={localGetStatusBadge(selectedFunding.status, selectedFunding.type)}>
+                      {selectedFunding.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Requested Amount */}
+              {selectedFunding.type === "funding" && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-blue-600">Requested Amount</p>
+                      <p className="text-lg font-bold text-blue-900">
+                        ${selectedFunding.requested_amount}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-blue-400" />
+                  </div>
+                </div>
+              )}
+
+              {/* Form */}
+              <div className="space-y-4">
+
+                {/* Decision */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Evaluation Decision
+                  </label>
+                  <select
+                    value={isApproved}
+                    onChange={(e) => setIsApproved(e.target.value === "true")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg
+                               focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  >
+                    <option value="true">Approved</option>
+                    <option value="false">Rejected</option>
+                  </select>
+                </div>
+
+                {/* Approved Amount (Always visible) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Approved Amount
+                  </label>
+
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={approvedAmount}
+                      onChange={(e) => setApprovedAmount(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg
+                                 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      placeholder="Enter approved amount"
+                    />
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Committee Notes
+                  </label>
+                  <textarea
+                    value={committeeNotes}
+                    onChange={(e) => setCommitteeNotes(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg
+                               focus:ring-2 focus:ring-orange-500 focus:border-transparent
+                               outline-none min-h-[100px]"
+                    placeholder="Enter evaluation notes and feedback..."
+                  />
+                </div>
+
               </div>
             </div>
-          )}
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Committee Notes
-            </label>
-            <textarea
-              value={committeeNotes}
-              onChange={(e) => setCommitteeNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-orange-500 focus:border-transparent
-                         outline-none min-h-[100px]"
-              placeholder="Enter evaluation notes and feedback..."
-            />
+            {/* Footer */}
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedFunding(null)}
+                disabled={loading}
+                className="px-6 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={submitEvaluation}
+                disabled={loading}
+                className={`px-6 py-2 text-sm font-medium text-white rounded-lg transition-all ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+              >
+                {loading ? "Processing..." : "Submit Evaluation"}
+              </button>
+            </div>
+
           </div>
-
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-        <button
-          onClick={() => setSelectedFunding(null)}
-          disabled={loading}
-          className="px-6 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={submitEvaluation}
-          disabled={loading}
-          className={`px-6 py-2 text-sm font-medium text-white rounded-lg transition-all ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-emerald-600 hover:bg-emerald-700"
-          }`}
-        >
-          {loading ? "Processing..." : "Submit Evaluation"}
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
+      )}
 
     </div>
   );

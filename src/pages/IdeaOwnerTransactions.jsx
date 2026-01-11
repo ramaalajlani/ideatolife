@@ -70,13 +70,13 @@ const IdeaOwnerTransactions = () => {
   }
 
   return (
- <div className="p-4 sm:p-6 lg:p-8 space-y-8 font-inter">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 font-inter">
 
       {/* Header */}
       <div className="flex justify-between items-end border-b-2 border-gray-100 pb-4">
         <div>
           <h3 className="text-3xl font-black text-gray-900 tracking-tight uppercase">
-            Transaction Archive
+       MY checks
           </h3>
           <p className="text-gray-500 text-sm mt-1">
             Official records of all wallet movements
@@ -127,6 +127,13 @@ const IdeaOwnerTransactions = () => {
 
               {/* Check Body */}
               <div className="space-y-4">
+                <div className="flex items-center gap-4 border-b border-gray-300 border-dashed pb-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase min-w-[60px]">Type:</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded uppercase">
+                    {tx.type || "N/A"}
+                  </span>
+                </div>
+
                 <div className="flex items-center gap-4 border-b border-gray-300 border-dashed pb-2">
                   <span className="text-xs font-bold text-gray-400 uppercase min-w-[60px]">Pay to:</span>
                   <span className="text-lg font-serif italic text-gray-800">{tx.to || "Unspecified"}</span>

@@ -10,7 +10,10 @@ const api = axios.create({
   },
 });
 
-
+/* ===============================
+   Request Interceptor
+   يضيف التوكن تلقائياً
+================================ */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -24,15 +27,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-
+/* ===============================
+   Response Interceptor
+   عند انتهاء التوكن أو Unauthenticated
+================================ */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-
+      // حذف التوكن
       localStorage.removeItem("token");
 
-
+      // إعادة التوجيه لصفحة تسجيل الدخول
       window.location.href = "/login";
     }
 

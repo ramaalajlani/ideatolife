@@ -56,31 +56,40 @@ const App = () => {
                   <>
                     <Navbar />
                     <div className="bg-gray-900 text-white min-h-screen">
-                      <section id="home" className="bg-white">
+                      <section id="home" className="bg-white w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
                         <HeroSection />
                       </section>
-                      <ActiveSlider />
-                      <section id="features"><FeatureSection /></section>
-                      <section id="workflow"><Workflow /></section>
-                      <section id="success-stories"><SuccessStories /></section>
-                      <section id="expert-committee"><Testimonials /></section>
+                      <div className="w-full overflow-x-hidden">
+                        <ActiveSlider />
+                      </div>
+                      <section id="features" className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <FeatureSection />
+                      </section>
+                      <section id="workflow" className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <Workflow />
+                      </section>
+                      <section id="success-stories" className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <SuccessStories />
+                      </section>
+                      <section id="expert-committee" className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <Testimonials />
+                      </section>
                       <Footer />
                     </div>
                   </>
                 } />
 
                 {/* صفحات اللجنة */}
-              {/* صفحات اللجنة - تعديل المسار في ملف App.js */}
-<Route path="/committee-dashboard/:ideaId?" element={
-  <div className="flex min-h-screen bg-gray-50">
-    <DashboardSidebar /> {/* السايد بار العريض */}
-    <main className="flex-1 lg:ml-72 transition-all duration-300">
-      <div className="p-4 md:p-8">
-        <CommitteeDashboard /> 
-      </div>
-    </main>
-  </div>
-} />
+                <Route path="/committee-dashboard/:ideaId?" element={
+                  <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+                    <DashboardSidebar /> {/* السايد بار العريض */}
+                    <main className="flex-1 lg:ml-72 w-full transition-all duration-300">
+                      <div className="p-4 md:p-8 w-full overflow-x-auto">
+                        <CommitteeDashboard /> 
+                      </div>
+                    </main>
+                  </div>
+                } />
                 <Route path="/committee/register" element={<RegisterCommitteeMember />} />
                 <Route path="/login/committee-member" element={<LoginCommitteeMember />} />
 
@@ -144,25 +153,21 @@ const App = () => {
                 } />
                 <Route path="/prodify" element={<ProdifyLanding />} />
                 <Route path="/notifications" element={
-  <LayoutWrapper activeItem="notifications">
-    <Notifications />
-  </LayoutWrapper>
-} />
-<Route 
-  path="transactions" 
-  element={
-    <LayoutWrapper activeItem="transactions">
-      <IdeaOwnerTransactions />
-    </LayoutWrapper>
-  } 
-/>
-
+                  <LayoutWrapper activeItem="notifications">
+                    <Notifications />
+                  </LayoutWrapper>
+                } />
+                <Route path="transactions" element={
+                  <LayoutWrapper activeItem="transactions">
+                    <IdeaOwnerTransactions />
+                  </LayoutWrapper>
+                } />
 
                 {/* صفحة 404 */}
                 <Route path="*" element={
-                  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                  <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
                     <Navbar />
-                    <div className="text-center py-20 mt-20">
+                    <div className="text-center py-20 mt-20 w-full max-w-screen-md">
                       <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
                       <p className="text-gray-600 mb-8">الصفحة التي تبحث عنها غير موجودة</p>
                       <a href="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
