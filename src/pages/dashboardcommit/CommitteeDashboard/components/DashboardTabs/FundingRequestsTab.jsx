@@ -1,7 +1,6 @@
 // src/pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/FundingRequestsTab.jsx
 import React, { useState } from "react";
 import axios from "axios";
-import { CheckCircle, Clock, XCircle, DollarSign, FileText, Eye, X } from "lucide-react";
 
 const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData, isLoading }) => {
   const [selectedFunding, setSelectedFunding] = useState(null);
@@ -79,7 +78,7 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
     return (
       <div className="bg-white rounded-xl border border-dashed border-gray-200 py-24 text-center">
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <DollarSign className="w-8 h-8 text-gray-400" />
+          <span className="text-2xl text-gray-400">$</span>
         </div>
         <h3 className="text-base font-medium text-gray-400">No Funding Requests</h3>
         <p className="text-gray-400 text-sm mt-2">No funding requests available for evaluation</p>
@@ -119,7 +118,6 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
                 <td className="px-4 py-3 text-sm text-gray-600 font-medium">{request.funding_id}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-900">{request.idea?.title || "N/A"}</span>
                   </div>
                 </td>
@@ -135,7 +133,6 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-900">
                       {request.requested_amount ? `$${request.requested_amount}` : "-"}
                     </span>
@@ -157,9 +154,8 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
                 <td className="px-4 py-3">
                   <button
                     onClick={() => handleEvaluateClick(request)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
+                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all"
                   >
-                    <CheckCircle className="w-4 h-4" />
                     Evaluate
                   </button>
                 </td>
@@ -192,7 +188,7 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
                 onClick={() => setSelectedFunding(null)}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
               >
-                <X size={20} />
+                ×
               </button>
             </div>
 
@@ -242,7 +238,7 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
                         ${selectedFunding.requested_amount}
                       </p>
                     </div>
-                    <DollarSign className="w-8 h-8 text-blue-400" />
+                    <span className="text-2xl text-blue-400">$</span>
                   </div>
                 </div>
               )}

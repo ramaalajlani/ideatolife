@@ -25,46 +25,52 @@ const stepVariants = {
 
 const Workflow = () => {
   return (
-    <div className="mt-16">
-      <h2 className="text-3xl sm:text-5xl lg:text-6xl text-center mt-4 tracking-wide">
+    <div className="mt-16 px-4">
+      {/* العنوان مع تحسين سماكة الخط والتباعد */}
+      <h2 className="text-4xl sm:text-5xl lg:text-6xl text-center mt-4 tracking-tight font-black text-white leading-tight">
         The Integrated System for{" "}
-        <span className="bg-gradient-to-r from-orange-500 to-orange-800 text-transparent bg-clip-text">
+        <span className="bg-gradient-to-r from-orange-400 to-orange-700 text-transparent bg-clip-text">
           Idea Incubation
         </span>
       </h2>
 
-      <div className="flex flex-wrap justify-center mt-8">
-        {/* Image */}
-        <div className="p-2 w-full lg:w-1/2">
+      <div className="flex flex-wrap justify-center mt-12 lg:mt-20">
+        {/* الصورة مع إضافة ظل ناعم */}
+        <div className="p-4 w-full lg:w-1/2 flex justify-center">
           <img 
             src={codeImg} 
             alt="Business development workflow" 
-            className="rounded-lg h-200 object-cover w-full shadow-lg hover:opacity-90 transition-opacity duration-300"
+            className="rounded-[2rem] h-auto max-h-[600px] object-cover w-full shadow-2xl border border-neutral-800 hover:scale-[1.01] transition-transform duration-500"
           />
         </div>
 
-        {/* Steps with slower stagger */}
+        {/* الخطوات مع تحسين نصوص العناوين والوصف */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="pt-8 w-full lg:w-1/2"
+          className="pt-8 w-full lg:w-1/2 lg:pl-12"
         >
           {workflowSteps.map((step, index) => (
             <motion.div
               key={index}
               variants={stepVariants}
-              className="flex mb-8 hover:bg-gray-800/30 p-3 rounded-lg transition-all duration-300"
+              className="flex mb-10 group cursor-default p-4 rounded-2xl hover:bg-white/[0.03] transition-all duration-300"
             >
-              <div className="text-green-400 mx-6 bg-gray-700 h-10 w-10 p-2 justify-center items-center rounded-full flex border border-gray-600 hover:bg-green-500 hover:text-white transition-colors duration-300">
-                <CheckCircle2 />
+              {/* أيقونة التحقق */}
+              <div className="text-emerald-400 mx-6 bg-neutral-900 h-12 w-12 p-3 justify-center items-center rounded-xl flex border border-neutral-800 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-400 transition-all duration-300 shadow-inner">
+                <CheckCircle2 strokeWidth={3} />
               </div>
+
               <div>
-                <h5 className="mt-1 mb-3 text-xl hover:text-orange-400 transition-colors duration-300">
+                {/* العنوان: جعلته عريضاً (Bold) ولونه أكثر بياضاً */}
+                <h5 className="mt-1 mb-2 text-2xl font-black text-white tracking-tight group-hover:text-orange-400 transition-colors duration-300">
                   {step.title}
                 </h5>
-                <p className="text-md text-neutral-300 hover:text-white transition-colors duration-300">
+                
+                {/* الوصف: جعلته بلون رمادي فاتح مع زيادة ارتفاع السطر لسهولة القراءة */}
+                <p className="text-md text-neutral-400 leading-relaxed font-medium group-hover:text-neutral-200 transition-colors duration-300 max-w-md">
                   {step.description}
                 </p>
               </div>

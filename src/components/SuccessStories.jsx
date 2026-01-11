@@ -3,25 +3,19 @@ import axios from "axios";
 import { motion } from "framer-motion";
 
 const containerVariants = {
-  hidden: {},
+  hidden: { opacity: 0 },
   show: {
-    transition: {
-      staggerChildren: 0.3,
-      delayChildren: 0.2,
-    },
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.2 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  hidden: { opacity: 0, y: 50 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-    },
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
@@ -44,118 +38,84 @@ const SuccessStories = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-20 text-xl text-gray-500">
-        Loading success stories...
+      <div className="flex items-center justify-center min-h-[600px] bg-white">
+        <div className="w-12 h-12 border-[3px] border-orange-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <section className="mt-20 bg-white py-16">
-      <div className="container mx-auto px-4">
-        {/* العنوان */}
-        <div className="text-center mb-12">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-3xl sm:text-5xl lg:text-6xl mb-4 tracking-wide text-black"
-          >
-            Success{" "}
-            <span className="bg-gradient-to-r from-orange-500 to-orange-800 text-transparent bg-clip-text">
-              Stories
-            </span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="text-xl text-neutral-600 max-w-3xl mx-auto"
-          >
-            Inspiring projects that started on our platform
-          </motion.p>
+    <section className="relative py-32 bg-white overflow-hidden text-slate-900">
+      <div className="container mx-auto px-6">
+        {/* الهيدر */}
+        <div className="max-w-4xl mx-auto text-center mb-28">
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-slate-900 text-white text-[11px] font-bold uppercase tracking-[0.25em]">
+            Hall of Excellence
+          </div>
+
+          <h2 className="text-6xl md:text-8xl font-black text-slate-900 mb-8 tracking-[ -0.04em] leading-none">
+            Success <span className="text-orange-600">Stories.</span>
+          </h2>
+
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
+            From conceptual sparks to market leaders. Explore the projects that define our ecosystem's success.
+          </p>
         </div>
 
-        {/* البطاقات */}
+        {/* شبكة البطاقات */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
         >
-          {projects.map((project, index) => {
-            const initials = project.owner.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase();
+          {projects.map((project, index) => (
+            <motion.div
+              key={index}
+              variants={itemVariants}
+              className="group relative flex flex-col h-full bg-white rounded-[3rem] border-2 border-slate-100 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] overflow-hidden
+                         transition-all duration-300 hover:bg-orange-50 hover:shadow-xl hover:-translate-y-2"
+            >
+              {/* Card Badge */}
+              <div className="absolute top-8 left-8 z-20">
+                <span className="px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-slate-100 text-[10px] font-black uppercase text-slate-900 shadow-sm">
+                  {project.graduation_date || "Class of 2024"}
+                </span>
+              </div>
 
-            return (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className="group relative cursor-pointer overflow-hidden bg-white px-6 pt-10 pb-8 shadow-xl ring-1 ring-gray-900/5 transition-all duration-300 sm:mx-auto sm:rounded-lg"
-              >
-                {/* الخلفية */}
-                <span className="absolute top-10 z-0 h-20 w-20 rounded-full bg-gradient-to-r from-orange-500 to-orange-800 transition-all duration-300 group-hover:scale-[10]" />
-
-                <div className="relative z-10 mx-auto">
-                  {/* الصورة */}
-                  <div className="relative -mt-6 h-56 overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-orange-800 shadow-lg mb-6">
-                    <img
-                      src="https://via.placeholder.com/400x300?text=Graduated+Project"
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
-                    />
-                  </div>
-
-                  {/* المستخدم */}
-                  <div className="flex items-center mb-4">
-                    <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-r from-orange-500 to-orange-800 text-white font-bold text-lg">
-                      {initials}
-                    </div>
-                    <div className="ml-4">
-                      <h5 className="text-xl font-semibold text-gray-900 group-hover:text-[#FEEE91]">
-                        {project.owner.name}
-                      </h5>
-                      <p className="text-orange-600 font-medium group-hover:text-[#FEEE91]">
-                        {project.title}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* القصة */}
-                  <p className="text-gray-600 group-hover:text-white/90 line-clamp-3">
-                    This project successfully graduated from the platform and
-                    became an independent business.
+              {/* Text Content */}
+              <div className="px-10 pt-16 pb-12 text-center flex-grow flex flex-col">
+                <div className="mb-6">
+                  <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm font-bold text-orange-500 uppercase tracking-widest flex items-center justify-center gap-2">
+                    <span className="w-4 h-[2px] bg-orange-500/30"></span>
+                    {project.owner.name}
+                    <span className="w-4 h-[2px] bg-orange-500/30"></span>
                   </p>
+                </div>
 
-                  {/* معلومات إضافية */}
-                  <div className="flex justify-between items-center text-sm text-gray-500 mt-4 group-hover:text-white/80">
-                    <div>
-                      <span className="font-semibold">Committee:</span>{" "}
-                      {project.committee?.name || "N/A"}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Graduated:</span>{" "}
-                      {project.graduation_date}
-                    </div>
-                  </div>
+                <p className="text-slate-500 text-base leading-relaxed font-medium mb-10 line-clamp-3">
+                  {project.description ||
+                    "A revolutionary project that successfully transitioned from a visionary prototype to a high-impact market solution."}
+                </p>
 
-                  {/* زر */}
-                  <div className="flex justify-end mt-6">
-                    <button className="rounded-lg bg-gradient-to-r from-orange-500 to-orange-800 py-2 px-6 text-sm font-bold uppercase text-white transition-all hover:scale-105">
-                      Read More
-                    </button>
+                {/* Card Footer */}
+                <div className="mt-auto pt-8 border-t border-slate-50">
+                  <div className="inline-flex flex-col items-center">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">
+                      Supervised By
+                    </span>
+                    <div className="px-8 py-3 rounded-2xl bg-slate-900 text-white text-xs font-bold shadow-xl shadow-slate-200">
+                      {project.committee?.name || "Innovation Council"}
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
     </section>

@@ -12,20 +12,16 @@ function CommitteeDashboard() {
   const navigate = useNavigate();
 
   // البيانات
+  const [ideas, setIdeas] = useState([]);
   const [bmcs, setBmcs] = useState([]);
   const [fundingRequests, setFundingRequests] = useState([]);
   const [fundingChecks, setFundingChecks] = useState([]);
   const [launchRequests, setLaunchRequests] = useState([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
-  const [committeeInfo, setCommitteeInfo] = useState({
-    name: "Loading...",
-    role: "Committee Member"
-  });
-
+  const [committeeInfo, setCommitteeInfo] = useState({ name: "Loading...", role: "Committee Member" });
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-
-  const [activeTab, setActiveTab] = useState("bmcs");
+  const [activeTab, setActiveTab] = useState("ideas");
   const [loading, setLoading] = useState(true);
   const [selectedIdeaId, setSelectedIdeaId] = useState(null);
 
@@ -36,7 +32,8 @@ function CommitteeDashboard() {
     fundingRequestsCount: 0,
     fundingChecksCount: 0,
     pendingLaunchRequests: 0,
-    pendingWithdrawals: 0
+    pendingWithdrawals: 0,
+    pendingIdeas: 0
   });
 
   // جلب كل البيانات دفعة واحدة
@@ -50,18 +47,15 @@ function CommitteeDashboard() {
       }
 
       // بيانات المستخدم
-      const userResponse = await axios.get(
-        "http://127.0.0.1:8000/api/profile_member",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const userData = userResponse.data.committee_member;
-      setCommitteeInfo({
-        name: userData.name,
-        role: userData.committee_role
+      const userResponse = await axios.get("http://127.0.0.1:8000/api/profile_member", {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      const userData = userResponse.data.committee_member;
+      setCommitteeInfo({ name: userData.name, role: userData.committee_role });
 
       // جلب البيانات المتعددة
       const [
+        ideasResponse,
         bmcsResponse,
         fundingRequestsResponse,
         fundingChecksResponse,
@@ -70,6 +64,7 @@ function CommitteeDashboard() {
         meetingsResponse,
         notificationsResponse
       ] = await Promise.all([
+        axios.get("http://127.0.0.1:8000/api/committee/ideas", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { ideas: [] } })),
         axios.get("http://127.0.0.1:8000/api/committee/bmcs", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { bmcs: [] } })),
         axios.get("http://127.0.0.1:8000/api/committee/fundings", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { funding_requests: [] } })),
         axios.get("http://127.0.0.1:8000/api/committee/funding-checks", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { checks: [] } })),
@@ -79,15 +74,14 @@ function CommitteeDashboard() {
         axios.get("http://127.0.0.1:8000/api/notifications/owner", { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { notifications: [], count: 0 } }))
       ]);
 
+      setIdeas(ideasResponse.data?.ideas || []);
       setBmcs(bmcsResponse.data?.bmcs || []);
       setFundingRequests(fundingRequestsResponse.data?.funding_requests || []);
       setFundingChecks(fundingChecksResponse.data?.checks || []);
       setLaunchRequests(launchRequestsResponse.data?.pending_launch_requests || []);
       setWithdrawalRequests(withdrawalRequestsResponse.data?.requests || []);
       setNotifications(notificationsResponse.data?.notifications || []);
-      setUnreadCount(
-        (notificationsResponse.data?.notifications || []).filter(n => n.is_read === 0).length
-      );
+      setUnreadCount((notificationsResponse.data?.notifications || []).filter(n => n.is_read === 0).length);
 
       setStats({
         upcomingMeetings: meetingsResponse.data?.upcoming_meetings?.length || 0,
@@ -95,9 +89,9 @@ function CommitteeDashboard() {
         fundingRequestsCount: fundingRequestsResponse.data?.funding_requests?.length || 0,
         fundingChecksCount: fundingChecksResponse.data?.checks?.length || 0,
         pendingLaunchRequests: launchRequestsResponse.data?.pending_launch_requests?.length || 0,
-        pendingWithdrawals: withdrawalRequestsResponse.data?.total_requests || 0
+        pendingWithdrawals: withdrawalRequestsResponse.data?.total_requests || 0,
+        pendingIdeas: ideasResponse.data?.ideas?.length || 0
       });
-
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
@@ -105,9 +99,7 @@ function CommitteeDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-  }, [navigate]);
+  useEffect(() => { fetchAllData(); }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("committee_token");
@@ -121,18 +113,26 @@ function CommitteeDashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleViewProfitDistribution = (idea) => {
+    setSelectedIdeaId(idea.id);
+    setActiveTab("profitDistribution");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const tabs = [
+    { id: "ideas", label: "Assigned Ideas", badge: stats.pendingIdeas },
     { id: "bmcs", label: "Business Models", badge: stats.pendingBMCS },
     { id: "fundingRequests", label: "Funding Requests", badge: stats.fundingRequestsCount },
     { id: "fundingChecks", label: "Funding Checks", badge: stats.fundingChecksCount },
     { id: "launchRequests", label: "Launch Requests", badge: stats.pendingLaunchRequests },
     { id: "withdrawals", label: "Withdrawal Requests", badge: stats.pendingWithdrawals },
-    { id: "gantt", label: "Gantt Chart" }
+    { id: "gantt", label: "Gantt Chart" },
+    { id: "profitDistribution", label: "Profit Distribution" }
   ];
 
   return (
@@ -142,22 +142,29 @@ function CommitteeDashboard() {
         onTabChange={handleTabChange}
         userData={committeeInfo}
         onLogout={handleLogout}
-        tabs={tabs}
+        withdrawalCount={stats.pendingWithdrawals}
+        profitDistributionCount={0}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader
-          activeTab={activeTab}
-          tabs={tabs}
-          userName={committeeInfo.name}
-          token={localStorage.getItem("committee_token")} // ✅ تمرير التوكن
-          notifications={notifications} // ✅ تمرير الإشعارات
-          unreadCount={unreadCount} // ✅ تمرير عدد غير المقروءة
-        />
+      {/* التعديل الرئيسي هنا: استخدام pl-72 بدلاً من ml-72 */}
+      <div className="flex-1 flex flex-col overflow-hidden pl-0">
+        {/* الهيدر ثابت في الأعلى */}
+        <div className="sticky top-0 z-40">
+          <DashboardHeader
+            activeTab={activeTab}
+            tabs={tabs}
+            userName={committeeInfo.name}
+            token={localStorage.getItem("committee_token")}
+            notifications={notifications}
+            unreadCount={unreadCount}
+          />
+        </div>
 
-        <main className="flex-1 overflow-auto p-8 md:p-10">
+        {/* المحتوى الرئيسي يبدأ مباشرة تحت الهيدر */}
+        <main className="flex-1 overflow-auto p-6">
           <DashboardTabs
             activeTab={activeTab}
+            ideas={ideas}
             bmcs={bmcs}
             fundingRequests={fundingRequests}
             fundingChecks={fundingChecks}
@@ -167,6 +174,8 @@ function CommitteeDashboard() {
             onRefresh={fetchAllData}
             isLoading={loading}
             onViewGanttChart={handleViewGanttChart}
+            onViewProfitDistribution={handleViewProfitDistribution}
+            committeeInfo={committeeInfo} // ✅ أضفت هذا البروب
           />
         </main>
       </div>

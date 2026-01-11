@@ -36,6 +36,9 @@ import CommitteeDashboard from "./pages/dashboardcommit/CommitteeDashboard";
 import Notifications from './components/Notifications/Notifications';
 import DashboardSidebar from './pages/dashboardcommit/CommitteeDashboard/components/DashboardSidebar/DashboardSidebar';
 import IdeaOwnerTransactions from "./pages/IdeaOwnerTransactions";
+import GanttChartTabs from './pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/GanttChartTabs';
+// أضف هذا مع بقية الاستيرادات في الأعلى
+import ProfitDistribution from './pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/ProfitDistribution';
 
 // Context
 import { IdeaProvider } from './context/IdeaContext';
@@ -78,6 +81,12 @@ const App = () => {
                     </div>
                   </>
                 } />
+       
+<Route path="/ideas/:ideaId/profit-distribution" element={
+  <LayoutWrapper activeItem="profit-distribution">
+    <ProfitDistribution />
+  </LayoutWrapper>
+} />
 
                 {/* صفحات اللجنة */}
                 <Route path="/committee-dashboard/:ideaId?" element={
@@ -121,6 +130,8 @@ const App = () => {
                     <BusinessModelCanvas />
                   </LayoutWrapper>
                 } />
+                       <Route path="/gantt-charts" element={<GanttChartTabs />} />
+        <Route path="/gantt-charts/:ideaId" element={<GanttChartTabs />} />
                 <Route path="/submit-idea" element={
                   <LayoutWrapper activeItem="submit-idea">
                     <IdeaSubmissionForm />

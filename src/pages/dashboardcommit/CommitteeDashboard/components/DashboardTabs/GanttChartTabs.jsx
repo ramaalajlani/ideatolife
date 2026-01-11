@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 
 // Phase Evaluation Modal
 const PhaseEvaluationModal = ({ gantt, onClose, onSubmit, submitting }) => {
@@ -157,18 +158,121 @@ const RefundPenaltyModal = ({ onClose, onSubmit, submitting }) => {
   );
 };
 
-const GanttChartTabs = () => {
+// Task Attachments Modal
+const TaskAttachmentsModal = ({ task, onClose }) => {
+  const [attachments, setAttachments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (task?.attachments) {
+      try {
+        const parsed = JSON.parse(task.attachments);
+        setAttachments(Array.isArray(parsed) ? parsed : [parsed]);
+      } catch (err) {
+        setAttachments([task.attachments]);
+      }
+    }
+  }, [task]);
+
+  const getFileType = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) return 'image';
+    if (['pdf'].includes(ext)) return 'pdf';
+    if (['doc', 'docx'].includes(ext)) return 'word';
+    if (['xls', 'xlsx'].includes(ext)) return 'excel';
+    return 'file';
+  };
+
+  const getFileUrl = (path) => {
+    return `http://127.0.0.1:8000/storage/${path}`;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 text-left font-sans">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col border border-gray-200">
+        <div className="p-5 border-b border-gray-200 bg-gray-50 rounded-t-lg flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Task Attachments</h3>
+            <p className="text-sm text-gray-500">{task?.task_name}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-5 flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="text-center py-8">Loading attachments...</div>
+          ) : attachments.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {attachments.map((attachment, index) => {
+                const fileType = getFileType(attachment);
+                const fileUrl = getFileUrl(attachment);
+                
+                return (
+                  <div key={index} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="p-3 bg-gray-50 border-b border-gray-200">
+                      <p className="text-xs font-medium text-gray-700 truncate">
+                        {attachment.split('/').pop()}
+                      </p>
+                    </div>
+                    <div className="p-4 flex flex-col items-center">
+                      {fileType === 'image' ? (
+                        <img 
+                          src={fileUrl} 
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-md mb-3"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-48 flex items-center justify-center bg-gray-100 rounded-md mb-3">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">
+                              {fileType === 'pdf' ? '📄' : fileType === 'word' ? '📝' : fileType === 'excel' ? '📊' : '📎'}
+                            </div>
+                            <p className="text-xs text-gray-500">{fileType.toUpperCase()} File</p>
+                          </div>
+                        </div>
+                      )}
+                      <a 
+                        href={fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        View/Download
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400 italic">No attachments available for this task</div>
+          )}
+        </div>
+
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end rounded-b-lg">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 font-medium hover:text-gray-800 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Ideas Cards View Component
+const IdeasCardsView = () => {
   const [ideas, setIdeas] = useState([]);
-  const [selectedIdea, setSelectedIdea] = useState(null);
-  const [ganttCharts, setGanttCharts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [modalGantt, setModalGantt] = useState(null);
-  const [showBulkApproval, setShowBulkApproval] = useState(false);
-  const [showRefundModal, setShowRefundModal] = useState(false);
-  const [penaltyData, setPenaltyData] = useState(null);
-  const [loadingPenalty, setLoadingPenalty] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchIdeas = async () => {
@@ -188,27 +292,167 @@ const GanttChartTabs = () => {
     fetchIdeas();
   }, []);
 
+  const handleCardClick = (idea) => {
+    // حفظ بيانات الفكرة محلياً لتجنب طلب API إضافي
+    localStorage.setItem('selectedIdea', JSON.stringify(idea));
+    navigate(`/gantt-charts/${idea.id}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading ideas...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 p-4 font-sans text-left text-gray-900">
+      <header className="border-b border-gray-200 pb-6">
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Gantt Charts & Phases Management</h2>
+        <p className="text-gray-500 text-sm mt-1">Select a project to view and manage its phases</p>
+      </header>
+
+      {/* Ideas Cards Grid */}
+      <section>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Select Project</h3>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ideas.map((idea) => (
+            <div 
+              key={idea.id}
+              onClick={() => handleCardClick(idea)}
+              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden group"
+            >
+              <div className="p-5 border-b border-gray-100">
+                <div className="flex items-start justify-between mb-3">
+                  <h4 className="font-bold text-gray-900 text-base line-clamp-2">{idea.title}</h4>
+                  <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100">
+                    #{idea.id}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-sm line-clamp-3 mb-4">{idea.description}</p>
+              </div>
+              
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                <span className="text-xs text-gray-400 font-medium">
+                  Click to view phases
+                </span>
+                <div className="text-orange-600 group-hover:translate-x-1 transition-transform">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {ideas.length === 0 && !loading && (
+          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl py-16 text-center">
+            <p className="text-gray-400 font-semibold uppercase text-sm tracking-widest">No projects available</p>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+};
+
+// Gantt Chart Details Component
+const GanttChartDetails = () => {
+  const { ideaId } = useParams();
+  const [idea, setIdea] = useState(null);
+  const [ganttCharts, setGanttCharts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [modalGantt, setModalGantt] = useState(null);
+  const [showBulkApproval, setShowBulkApproval] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [penaltyData, setPenaltyData] = useState(null);
+  const [loadingPenalty, setLoadingPenalty] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    if (!selectedIdea) return;
-    const fetchGanttAndPenalty = async () => {
+    const fetchIdeaAndData = async () => {
+      if (!ideaId) return;
+
       try {
         setLoading(true);
         setError("");
         const token = localStorage.getItem("committee_token");
-        const ganttRes = await axios.get(`http://127.0.0.1:8000/api/committee/ideas/${selectedIdea.id}/gantt-charts`, {
+        
+        // محاولة الحصول على الفكرة من localStorage أولاً
+        const savedIdea = localStorage.getItem('selectedIdea');
+        if (savedIdea) {
+          const parsedIdea = JSON.parse(savedIdea);
+          if (parsedIdea.id == ideaId) {
+            setIdea(parsedIdea);
+          } else {
+            // إذا كان الـ ID مختلف، نحاول الحصول من API
+            // استخدام endpoint مختلف للحصول على الفكرة
+            try {
+              const ideaRes = await axios.get(`http://127.0.0.1:8000/api/committee/ideas/${ideaId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              setIdea(ideaRes.data);
+            } catch (ideaErr) {
+              // إذا فشل الـ API، نستخدم البيانات المحفوظة كبديل
+              setIdea({
+                id: ideaId,
+                title: parsedIdea.title || `Project #${ideaId}`,
+                description: parsedIdea.description || "No description available"
+              });
+            }
+          }
+        } else {
+          // محاولة الحصول من API
+          try {
+            const ideaRes = await axios.get(`http://127.0.0.1:8000/api/committee/ideas/${ideaId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setIdea(ideaRes.data);
+          } catch (ideaErr) {
+            setIdea({
+              id: ideaId,
+              title: `Project #${ideaId}`,
+              description: "No description available"
+            });
+          }
+        }
+
+        // Fetch gantt charts
+        const ganttRes = await axios.get(`http://127.0.0.1:8000/api/gantt-charts/${ideaId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setGanttCharts(ganttRes.data.data || []);
 
+        // Fetch penalty data
         setLoadingPenalty(true);
         try {
-          const penaltyRes = await axios.get(`http://127.0.0.1:8000/api/ideas/${selectedIdea.id}/penalty-payment`, {
+          const penaltyRes = await axios.get(`http://127.0.0.1:8000/api/ideas/${ideaId}/penalty-payment`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setPenaltyData({ ...penaltyRes.data, paid: true, penalty_amount: penaltyRes.data.transaction?.amount || 0 });
+          setPenaltyData({ 
+            ...penaltyRes.data, 
+            paid: true, 
+            penalty_amount: penaltyRes.data.transaction?.amount || 0 
+          });
         } catch (penaltyErr) {
           if (penaltyErr.response?.status === 404) {
-            setPenaltyData({ paid: false, penalty_amount: 10000, transaction: null, message: "Penalty not paid yet" });
+            setPenaltyData({ 
+              paid: false, 
+              penalty_amount: 10000, 
+              transaction: null, 
+              message: "Penalty not paid yet" 
+            });
           } else {
             setPenaltyData(null);
           }
@@ -220,27 +464,30 @@ const GanttChartTabs = () => {
         setLoadingPenalty(false);
       }
     };
-    fetchGanttAndPenalty();
-  }, [selectedIdea]);
 
-  const handleSelectIdea = (idea) => {
-    setSelectedIdea(idea);
-    setShowBulkApproval(false);
-  };
-
-  const evaluatePhase = (gantt) => setModalGantt(gantt);
+    fetchIdeaAndData();
+  }, [ideaId]);
 
   const handleRefundPenalty = async (refundOption) => {
-    if (!selectedIdea || !penaltyData?.transaction?.id) return;
+    if (!ideaId || !penaltyData?.transaction?.id) return;
     try {
       if (!window.confirm(`Confirm refund of ${refundOption} amount?`)) return;
       setSubmitting(true);
       const token = localStorage.getItem("committee_token");
-      const res = await axios.post(`http://127.0.0.1:8000/api/ideas/${selectedIdea.id}/refund-penalty`, { refund_option: refundOption }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.post(
+        `http://127.0.0.1:8000/api/ideas/${ideaId}/refund-penalty`, 
+        { refund_option: refundOption }, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       alert(res.data?.message || "Refund processed successfully");
-      setPenaltyData(prev => ({ ...prev, paid: false, transaction: null, message: "Penalty refunded" }));
+      setPenaltyData(prev => ({ 
+        ...prev, 
+        paid: false, 
+        transaction: null, 
+        message: "Penalty refunded" 
+      }));
       setShowRefundModal(false);
     } catch (err) {
       alert(err.response?.data?.message || "Refund failed.");
@@ -250,15 +497,25 @@ const GanttChartTabs = () => {
   };
 
   const handleModalSubmit = async ({ score, comments }) => {
-    if (!modalGantt || !selectedIdea) return;
+    if (!modalGantt || !ideaId) return;
     try {
       setSubmitting(true);
       const token = localStorage.getItem("committee_token");
-      const res = await axios.post(`http://127.0.0.1:8000/api/ideas/${selectedIdea.id}/phase-evaluation/${modalGantt.id}`, { score, comments }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.post(
+        `http://127.0.0.1:8000/api/ideas/${ideaId}/phase-evaluation/${modalGantt.id}`, 
+        { score, comments }, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       alert(res.data.message);
-      setGanttCharts((prev) => prev.map((chart) => chart.id === modalGantt.id ? { ...chart, evaluation_score: score, evaluation_comments: comments } : chart));
+      setGanttCharts((prev) => 
+        prev.map((chart) => 
+          chart.id === modalGantt.id 
+            ? { ...chart, evaluation_score: score, evaluation_comments: comments } 
+            : chart
+        )
+      );
     } catch (err) {
       alert("Error evaluating phase.");
     } finally {
@@ -268,15 +525,21 @@ const GanttChartTabs = () => {
   };
 
   const handleBulkApproval = async ({ approval_status, reason }) => {
-    if (!selectedIdea) return;
+    if (!ideaId) return;
     try {
       setSubmitting(true);
       const token = localStorage.getItem("committee_token");
-      const res = await axios.post(`http://127.0.0.1:8000/api/ideas/${selectedIdea.id}/gantt/approve-or-reject`, { approval_status, reason }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.post(
+        `http://127.0.0.1:8000/api/ideas/${ideaId}/gantt/approve-or-reject`, 
+        { approval_status, reason }, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       alert(res.data.message);
-      setGanttCharts((prev) => prev.map((chart) => ({ ...chart, approval_status: approval_status })));
+      setGanttCharts((prev) => 
+        prev.map((chart) => ({ ...chart, approval_status: approval_status }))
+      );
       setShowBulkApproval(false);
     } catch (err) {
       alert("Error updating approvals.");
@@ -285,179 +548,276 @@ const GanttChartTabs = () => {
     }
   };
 
+  const handleBackClick = () => {
+    navigate('/committee/gantt-charts');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading project details...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+        <button 
+          onClick={handleBackClick}
+          className="mt-4 px-4 py-2 text-sm text-gray-600 font-medium hover:text-gray-800"
+        >
+          ← Back to Projects
+        </button>
+      </div>
+    );
+  }
+
+  if (!idea) {
+    return (
+      <div className="p-4">
+        <div className="text-gray-500">Project not found</div>
+        <button 
+          onClick={handleBackClick}
+          className="mt-4 px-4 py-2 text-sm text-gray-600 font-medium hover:text-gray-800"
+        >
+          ← Back to Projects
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 p-4 font-sans text-left text-gray-900" dir="ltr">
-      <header className="border-b border-gray-200 pb-6">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Gantt Charts & Phases Management</h2>
-        <p className="text-gray-500 text-sm mt-1">Project monitoring and evaluation panel</p>
+    <div className="space-y-8 p-4 font-sans text-left text-gray-900">
+      {/* Back Button */}
+      <button 
+        onClick={handleBackClick}
+        className="flex items-center text-sm text-gray-600 font-medium hover:text-gray-800 mb-4"
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Projects
+      </button>
+
+      {/* Project Header */}
+      <header className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{idea.title}</h2>
+            <p className="text-gray-500 text-sm mt-1">{idea.description}</p>
+          </div>
+          <span className="text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full">
+            Project ID: #{idea.id}
+          </span>
+        </div>
       </header>
 
-      {/* Projects Table */}
-      <section>
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">1. Select Project</h3>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr className="text-left text-gray-600">
-                <th className="p-4 font-semibold uppercase text-xs">Title</th>
-                <th className="p-4 font-semibold uppercase text-xs">Description</th>
-                <th className="p-4 font-semibold uppercase text-xs text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {ideas.map((idea) => (
-                <tr
-                  key={idea.id}
-                  onClick={() => handleSelectIdea(idea)}
-                  className={`cursor-pointer transition-colors ${selectedIdea?.id === idea.id ? "bg-orange-50/50" : "hover:bg-gray-50"}`}
-                >
-                  <td className="p-4 font-medium text-gray-900">{idea.title}</td>
-                  <td className="p-4 text-gray-500 text-sm truncate max-w-xs">{idea.description}</td>
-                  <td className="p-4 text-center">
-                    <span className={`text-[11px] px-3 py-1 rounded-full font-bold transition-colors ${selectedIdea?.id === idea.id ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-400 group-hover:text-gray-600"}`}>
-                      {selectedIdea?.id === idea.id ? "SELECTED" : "SELECT"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Penalty Info Card */}
+      <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="p-4 bg-red-50 border-b border-red-100 font-bold text-red-700 text-sm uppercase">
+          1. Penalty Information
+        </div>
+        <div className="p-5">
+          {loadingPenalty ? (
+            <div className="text-center text-sm text-gray-500">Loading penalty data...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Amount</p>
+                <p className="font-semibold text-red-600">
+                  {penaltyData?.penalty_amount?.toLocaleString()} SYP
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${penaltyData?.paid ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {penaltyData?.paid ? "Paid" : "Pending"}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Transaction ID</p>
+                <p className="font-mono text-xs text-gray-500">
+                  {penaltyData?.transaction?.id || "N/A"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 mb-1">Action</p>
+                {penaltyData?.paid && (
+                  <button 
+                    onClick={() => setShowRefundModal(true)}
+                    className="text-xs font-bold text-red-600 border border-red-200 px-4 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+                  >
+                    REFUND PENALTY
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {selectedIdea && (
-        <>
-          {/* Penalty Info Table */}
-          <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="p-4 bg-red-50 border-b border-red-100 font-bold text-red-700 text-sm uppercase">2. Penalty Information</div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-                  <tr>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Transaction ID</th>
-                    <th className="p-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loadingPenalty ? (
-                    <tr><td colSpan="4" className="p-4 text-center text-sm text-gray-500">Loading penalty data...</td></tr>
-                  ) : (
-                    <tr>
-                      <td className="p-4 font-semibold text-red-600">{penaltyData?.penalty_amount?.toLocaleString()} SYP</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${penaltyData?.paid ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {penaltyData?.paid ? "Paid" : "Pending"}
-                        </span>
-                      </td>
-                      <td className="p-4 font-mono text-xs text-gray-500">{penaltyData?.transaction?.id || "N/A"}</td>
-                      <td className="p-4 text-right">
-                        {penaltyData?.paid && (
-                          <button onClick={() => setShowRefundModal(true)} className="text-xs font-bold text-red-600 border border-red-200 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors">
-                            REFUND
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Committee Action Banner */}
-          <section className="bg-blue-600 p-5 rounded-lg text-white flex justify-between items-center shadow-md">
-            <div>
-              <p className="text-xs font-semibold opacity-90 uppercase mb-1">Bulk Phase Control</p>
-              <h4 className="font-bold text-lg">Decision for: {selectedIdea.title}</h4>
-            </div>
-            <button onClick={() => setShowBulkApproval(true)} className="bg-white text-blue-600 text-sm font-bold px-5 py-2.5 rounded shadow-sm hover:bg-gray-50 transition-all">
-              Apply Global Decision
-            </button>
-          </section>
-
-          {/* Phases Details Table */}
-          <section className="space-y-6">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">3. Phase Breakdown & Tasks</h3>
-            {ganttCharts.map((chart) => (
-              <div key={chart.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                <div className="bg-gray-50 p-5 border-b border-gray-200 flex justify-between items-center">
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-base">{chart.phase_name}</h4>
-                    <p className="text-xs text-gray-500 mt-1 font-medium uppercase">
-                      Timeline: {chart.start_date} → {chart.end_date} | Score: <span className="text-orange-600 font-bold">{chart.evaluation_score ?? "N/A"}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`text-xs font-bold px-4 py-1.5 rounded-full uppercase border ${chart.approval_status === 'approved' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-white text-gray-400 border-gray-200'}`}>
-                      {chart.approval_status || 'pending'}
-                    </span>
-                    <button onClick={() => evaluatePhase(chart)} className="bg-orange-600 text-white text-xs font-bold px-5 py-2 rounded-md hover:bg-orange-700 transition-colors shadow-sm">
-                      EVALUATE
-                    </button>
-                  </div>
-                </div>
-
-                {chart.tasks && chart.tasks.length > 0 ? (
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-white border-b border-gray-100 text-gray-400 uppercase text-[11px] font-bold">
-                      <tr>
-                        <th className="p-4">Task Name</th>
-                        <th className="p-4">Timeline</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4">Progress</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {chart.tasks.map((task) => (
-                        <tr key={task.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4">
-                            <p className="font-semibold text-gray-800">{task.task_name}</p>
-                            <p className="text-xs text-gray-400 mt-1 line-clamp-1 italic">{task.description}</p>
-                          </td>
-                          <td className="p-4 font-mono text-gray-500 text-xs">
-                            {task.start_date} <br/> {task.end_date}
-                          </td>
-                          <td className="p-4">
-                            <span className="bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-200 text-xs font-semibold uppercase">
-                              {task.status || 'pending'}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
-                                <div className="h-full bg-green-500" style={{ width: `${task.progress_percentage}%` }} />
-                              </div>
-                              <span className="font-bold text-gray-700 text-xs min-w-[35px]">{task.progress_percentage}%</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="p-6 text-center text-gray-400 text-sm italic">No tasks assigned to this phase.</div>
-                )}
-              </div>
-            ))}
-          </section>
-        </>
-      )}
-
-      {/* Empty State */}
-      {!selectedIdea && (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl py-24 text-center">
-          <p className="text-gray-400 font-semibold uppercase text-sm tracking-widest">Select a project above to display monitoring data</p>
+      {/* Committee Action Banner */}
+      <section className="bg-blue-600 p-5 rounded-lg text-white flex justify-between items-center shadow-md">
+        <div>
+          <p className="text-xs font-semibold opacity-90 uppercase mb-1">Bulk Phase Control</p>
+          <h4 className="font-bold text-lg">Decision for: {idea.title}</h4>
         </div>
-      )}
+        <button 
+          onClick={() => setShowBulkApproval(true)}
+          className="bg-white text-blue-600 text-sm font-bold px-5 py-2.5 rounded shadow-sm hover:bg-gray-50 transition-all"
+        >
+          Apply Global Decision
+        </button>
+      </section>
+
+      {/* Phases Details */}
+      <section className="space-y-6">
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          2. Phase Breakdown & Tasks
+        </h3>
+        
+        {ganttCharts.length === 0 ? (
+          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl py-12 text-center">
+            <p className="text-gray-400 font-semibold uppercase text-sm tracking-widest">No phases available for this project</p>
+          </div>
+        ) : (
+          ganttCharts.map((chart) => (
+            <div key={chart.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+              <div className="bg-gray-50 p-5 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-base">{chart.phase_name}</h4>
+                  <p className="text-xs text-gray-500 mt-1 font-medium uppercase">
+                    Timeline: {chart.start_date} → {chart.end_date} | 
+                    Score: <span className="text-orange-600 font-bold ml-1">
+                      {chart.evaluation_score ?? "N/A"}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`text-xs font-bold px-4 py-1.5 rounded-full uppercase border ${
+                    chart.approval_status === 'approved' 
+                      ? 'bg-green-50 text-green-700 border-green-200' 
+                      : chart.approval_status === 'rejected'
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : 'bg-white text-gray-400 border-gray-200'
+                  }`}>
+                    {chart.approval_status || 'pending'}
+                  </span>
+                  <button 
+                    onClick={() => setModalGantt(chart)}
+                    className="bg-orange-600 text-white text-xs font-bold px-5 py-2 rounded-md hover:bg-orange-700 transition-colors shadow-sm"
+                  >
+                    EVALUATE
+                  </button>
+                </div>
+              </div>
+
+              {chart.tasks && chart.tasks.length > 0 ? (
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-white border-b border-gray-100 text-gray-400 uppercase text-[11px] font-bold">
+                    <tr>
+                      <th className="p-4">Task Name</th>
+                      <th className="p-4">Timeline</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Progress</th>
+                      <th className="p-4">Attachments</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {chart.tasks.map((task) => (
+                      <tr key={task.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="p-4">
+                          <p className="font-semibold text-gray-800">{task.task_name}</p>
+                          <p className="text-xs text-gray-400 mt-1 line-clamp-1 italic">{task.description}</p>
+                        </td>
+                        <td className="p-4 font-mono text-gray-500 text-xs">
+                          {task.start_date} <br/> {task.end_date}
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-gray-50 text-gray-600 px-2 py-1 rounded border border-gray-200 text-xs font-semibold uppercase">
+                            {task.status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                              <div className="h-full bg-green-500" style={{ width: `${task.progress_percentage}%` }} />
+                            </div>
+                            <span className="font-bold text-gray-700 text-xs min-w-[35px]">
+                              {task.progress_percentage}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <button 
+                            onClick={() => setSelectedTask(task)}
+                            className="text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            View Attachments
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-6 text-center text-gray-400 text-sm italic">
+                  No tasks assigned to this phase.
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </section>
 
       {/* Modals */}
-      {modalGantt && <PhaseEvaluationModal gantt={modalGantt} onClose={() => setModalGantt(null)} onSubmit={handleModalSubmit} submitting={submitting} />}
-      {showBulkApproval && selectedIdea && <BulkApprovalModal idea={selectedIdea} onClose={() => setShowBulkApproval(false)} onSubmit={handleBulkApproval} submitting={submitting} />}
-      {showRefundModal && <RefundPenaltyModal onClose={() => setShowRefundModal(false)} onSubmit={handleRefundPenalty} submitting={submitting} />}
+      {modalGantt && (
+        <PhaseEvaluationModal 
+          gantt={modalGantt} 
+          onClose={() => setModalGantt(null)} 
+          onSubmit={handleModalSubmit} 
+          submitting={submitting} 
+        />
+      )}
+      {showBulkApproval && idea && (
+        <BulkApprovalModal 
+          idea={idea} 
+          onClose={() => setShowBulkApproval(false)} 
+          onSubmit={handleBulkApproval} 
+          submitting={submitting} 
+        />
+      )}
+      {showRefundModal && (
+        <RefundPenaltyModal 
+          onClose={() => setShowRefundModal(false)} 
+          onSubmit={handleRefundPenalty} 
+          submitting={submitting} 
+        />
+      )}
+      {selectedTask && (
+        <TaskAttachmentsModal 
+          task={selectedTask} 
+          onClose={() => setSelectedTask(null)} 
+        />
+      )}
     </div>
   );
+};
+
+// Main Wrapper Component
+const GanttChartTabs = () => {
+  const { ideaId } = useParams();
+  
+  // If ideaId exists in URL params, show details page, otherwise show cards view
+  if (ideaId) {
+    return <GanttChartDetails />;
+  }
+  
+  return <IdeasCardsView />;
 };
 
 export default GanttChartTabs;

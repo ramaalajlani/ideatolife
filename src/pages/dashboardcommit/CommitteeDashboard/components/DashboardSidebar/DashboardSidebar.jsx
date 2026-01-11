@@ -1,33 +1,34 @@
+// src/pages/dashboardcommit/CommitteeDashboard/components/DashboardSidebar/DashboardSidebar.jsx
 import React from "react";
 import { LogOut, User, Clipboard, FileText, Calendar, BarChart3, Layers, CheckCircle, Activity, ChevronRight } from "lucide-react";
 
-const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdrawalCount = 0 }) => {
+const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdrawalCount = 0, profitDistributionCount = 0 }) => {
   const tabs = [
-    { id: "ideas", label: "Assigned Ideas", icon: <Clipboard size={20} /> },
-    { id: "evaluations", label: "Evaluations", icon: <FileText size={20} /> },
-    { id: "meetings", label: "Meetings", icon: <Calendar size={20} /> },
-    { id: "bmcs", label: "Business Models", icon: <Layers size={20} /> },
-    { id: "fundingRequests", label: "Funding Requests", icon: <Activity size={20} /> },
-    { id: "fundingChecks", label: "Funding Checks", icon: <CheckCircle size={20} /> },
-        { id: "gantt", label: "Gantt Chart", icon: <BarChart3 size={20} /> },
-    { id: "launchRequests", label: "Launch Requests", icon: <Activity size={20} /> },
-    { id: "postLaunch", label: "Post-Launch Followups", icon: <Activity size={20} /> },
-    { id: "withdrawals", label: "Withdrawal Requests", icon: <Activity size={20} />, badge: withdrawalCount },
-
+    { id: "ideas", label: "Assigned Ideas", },
+    { id: "evaluations", label: "Evaluations",  },
+    { id: "meetings", label: "Meetings",  },
+    { id: "bmcs", label: "Business Models", },
+    { id: "fundingRequests", label: "Funding Requests", },
+    { id: "fundingChecks", label: "Our Transactions", },
+    { id: "gantt", label: "Gantt Chart", },
+    { id: "launchRequests", label: "Launch Requests",  },
+    { id: "postLaunch", label: "Post-Launch Followups", },
+    { id: "withdrawals", label: "Withdrawal Requests",},
+ 
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-72 bg-[#0F172A] border-r border-slate-800 shadow-2xl flex flex-col z-50">
+    <div className="fixed left-0 top-0 h-screen w-72 bg-[#0F172A] border-r border-slate-800 shadow-2xl flex flex-col z-50 pt-20"> {/* إضافة pt-20 هنا */}
       
-
       {/* Navigation tabs with Hidden Scrollbar */}
-      <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5 scrollbar-hide" 
-           style={{ 
-             msOverflowStyle: 'none', 
-             scrollbarWidth: 'none',
-             WebkitOverflowScrolling: 'touch' 
-           }}>
-        
+      <nav
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5 scrollbar-hide"
+        style={{
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
         {/* CSS لإخفاء السكرول بار في المتصفحات المختلفة */}
         <style dangerouslySetInnerHTML={{__html: `
           .scrollbar-hide::-webkit-scrollbar { display: none; }

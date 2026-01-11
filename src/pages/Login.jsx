@@ -1,9 +1,25 @@
+// src/pages/LoginRoute.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import axios from 'axios';
 import Lottie from 'lottie-react';
 import bulbAnimation from './Idea Bulb.json';
+import CryptoJS from 'crypto-js';
+
+// 🔐 مفتاح تشفير
+const SECRET_KEY = "idea2life-secret-key";
+
+// دوال تشفير وفك التوكن
+const encryptToken = (token) => CryptoJS.AES.encrypt(token, SECRET_KEY).toString();
+const decryptToken = (encryptedToken) => {
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedToken, SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch {
+    return null;
+  }
+};
 
 const LoginRoute = () => {
   const navigate = useNavigate();
@@ -29,7 +45,7 @@ const LoginRoute = () => {
   };
 
   // ========================
-  // Submit login (BACKEND MATCHED)
+  // Submit login
   // ========================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,17 +54,15 @@ const LoginRoute = () => {
     setErrors({});
 
     try {
-      const res = await axios.post(
-        'http://127.0.0.1:8000/api/login/idea-owner',
-        formData
-      );
+      const res = await axios.post('http://127.0.0.1:8000/api/login/idea-owner', formData);
 
-      // تعديل هنا ليحفظ التوكن واليوزر مثل صفحة التسجيل
       if (res.data && res.data.token) {
-        localStorage.setItem('token', res.data.token);
+        // 🔐 تشفير التوكن قبل التخزين
+        const encryptedToken = encryptToken(res.data.token);
+        localStorage.setItem('token', encryptedToken);
         localStorage.setItem('user', JSON.stringify(res.data.user));
 
-        navigate('/profile'); // نفس المنطق المطلوب
+        navigate('/profile');
       } else {
         setError(res.data?.message || 'Login failed. Please try again.');
       }
@@ -67,6 +81,25 @@ const LoginRoute = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ========================
+  // مثال استخدام API بعد فك التوكن
+  // ========================
+  const fetchProfile = async () => {
+    const encryptedToken = localStorage.getItem('token');
+    const token = decryptToken(encryptedToken);
+
+    if (!token) return;
+
+    try {
+      const res = await axios.get('http://127.0.0.1:8000/api/idea-owner/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('Profile:', res.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -124,50 +157,38 @@ const LoginRoute = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-5 py-4 rounded-lg border ${
-                  errors.email ? 'border-red-500' : 'border-slate-300'
-                } focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
+                className={`w-full px-5 py-4 rounded-lg border ${errors.email ? 'border-red-500' : 'border-slate-300'} focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
                 placeholder="Type your email"
                 required
               />
               <User className="absolute right-4 top-[50px] text-slate-400" />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1 italic">
-                  {errors.email[0]}
-                </p>
-              )}
+              {errors.email && <p className="text-red-500 text-sm mt-1 italic">{errors.email[0]}</p>}
             </div>
 
-            {/* Password */}
-            <div className="relative">
-              <label className="block text-slate-600 text-sm mb-2 italic">
-                Password
-              </label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`w-full px-5 py-4 rounded-lg border ${
-                  errors.password ? 'border-red-500' : 'border-slate-300'
-                } focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
-                placeholder="Type your password"
-                required
-              />
-              <Lock className="absolute right-4 top-[50px] text-slate-400" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-4 top-[50px] text-slate-500"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1 italic">
-                  {errors.password[0]}
-                </p>
-              )}
-            </div>
+ 
+<div className="relative">
+  <label className="block text-slate-600 text-sm mb-2 italic">Password</label>
+  <input
+    type={showPassword ? 'text' : 'password'}
+    name="password"
+    value={formData.password}
+    onChange={handleInputChange}
+    className={`w-full px-5 py-4 rounded-lg border pl-12 pr-12 ${errors.password ? 'border-red-500' : 'border-slate-300'} focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
+    placeholder="Type your password"
+    required
+  />
+  {/* Lock icon على اليسار */}
+  <Lock className="absolute left-4 top-[50px] text-slate-400" />
+  {/* Eye icon على اليمين */}
+  <button 
+    type="button" 
+    onClick={() => setShowPassword(!showPassword)} 
+    className="absolute right-4 top-[50px] text-slate-500 hover:text-slate-700"
+  >
+    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+  </button>
+  {errors.password && <p className="text-red-500 text-sm mt-1 italic">{errors.password[0]}</p>}
+</div>
 
             {/* Submit */}
             <button
@@ -182,11 +203,7 @@ const LoginRoute = () => {
             <div className="text-center mt-4">
               <p className="text-slate-600 italic">
                 Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate("/register")}
-                  className="text-[#f87115] font-bold hover:underline"
-                >
+                <button type="button" onClick={() => navigate("/register")} className="text-[#f87115] font-bold hover:underline">
                   Create account
                 </button>
               </p>
@@ -195,27 +212,16 @@ const LoginRoute = () => {
           </form>
         </div>
 
-        {/* RIGHT SECTION with Animation */}
+        {/* RIGHT SECTION */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-50 to-red-50 items-center justify-center p-10 relative">
-          {/* تصميم المثلث المائل الفاصل */}
           <div className="absolute top-0 left-0 h-full w-24 bg-white -translate-x-12 -skew-x-12 origin-top"></div>
-
           <div className="text-center z-10">
             <div className="w-full max-w-sm mx-auto mb-6">
-              <Lottie
-                animationData={bulbAnimation}
-                loop={true}
-                autoplay={true}
-                style={{ width: '100%', height: '300px' }}
-              />
+              <Lottie animationData={bulbAnimation} loop autoplay style={{ width: '100%', height: '300px' }} />
             </div>
             <h1 className="text-5xl font-black mb-6 italic">WELCOME BACK!</h1>
-            <p className="text-slate-600 max-w-sm italic">
-              We're happy to see you again. Sign in to continue your journey with Idea2Life.
-            </p>
+            <p className="text-slate-600 max-w-sm italic">We're happy to see you again. Sign in to continue your journey with Idea2Life.</p>
           </div>
-
-          {/* دوائر ديكورية في الخلفية */}
           <div className="absolute top-10 right-10 w-32 h-32 bg-orange-200/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-10 left-20 w-48 h-48 bg-orange-100/30 rounded-full blur-3xl"></div>
         </div>

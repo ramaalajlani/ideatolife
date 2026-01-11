@@ -1,3 +1,4 @@
+// src/pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/DashboardTabs.jsx
 import React from "react";
 import IdeasTab from "./IdeasTab";
 import EvaluationsTab from "./EvaluationsTab";
@@ -7,8 +8,8 @@ import FundingRequestsTab from "./FundingRequestsTab";
 import FundingChecksTab from "./FundingChecksTab";
 import GanttChartTabs from "./GanttChartTabs";
 import LaunchRequestsTab from "./LaunchRequestsTab";
-import PostLaunchFollowupsTab from "./PostLaunchFollowupsTab"; // ✨ جديد
-import WithdrawalRequestsTab from "./WithdrawalRequests"; // ✨ جديد: تاب طلبات الانسحاب
+import PostLaunchFollowupsTab from "./PostLaunchFollowupsTab";
+import WithdrawalRequestsTab from "./WithdrawalRequests";
 
 const DashboardTabs = ({
   activeTab,
@@ -17,18 +18,27 @@ const DashboardTabs = ({
   evaluations = [],
   fundingRequests = [],
   fundingChecks = [],
-  launchRequests = [], // 🆕
-  postLaunchFollowups = [], // ✨ جديد
-  withdrawalRequests = [], // ✨ جديد: بيانات طلبات الانسحاب
+  launchRequests = [],
+  postLaunchFollowups = [],
+  withdrawalRequests = [],
   getStatusBadge,
   onViewGanttChart,
+  onViewProfitDistribution, // ✅ أضفت هذا البروب
   onRefresh,
   isLoading = false,
   selectedIdeaId,
+  committeeInfo, // ✅ أضفت هذا البروب
 }) => {
   switch (activeTab) {
     case "ideas":
-      return <IdeasTab ideas={ideas} onViewGanttChart={onViewGanttChart} />;
+      return (
+        <IdeasTab 
+          ideas={ideas} 
+          onViewGanttChart={onViewGanttChart}
+          onViewProfitDistribution={onViewProfitDistribution} // ✅ تمريرها هنا
+          committeeInfo={committeeInfo} // ✅ أضف هذا السطر
+        />
+      );
 
     case "evaluations":
       return <EvaluationsTab evaluations={evaluations} />;
@@ -38,6 +48,16 @@ const DashboardTabs = ({
 
     case "bmcs":
       return <BMCsTab bmcs={bmcs} />;
+
+    case "profitDistribution":
+      return (
+        <ProfitDistributionTab 
+          ideaId={selectedIdeaId} 
+          ideas={ideas} 
+          committeeInfo={committeeInfo} // ✅ تمرير committeeInfo هنا
+          onRefresh={onRefresh}
+        />
+      );
 
     case "fundingRequests":
       return (
@@ -61,7 +81,7 @@ const DashboardTabs = ({
         />
       );
 
-    case "postLaunch": // ✨ جديد
+    case "postLaunch":
       return (
         <PostLaunchFollowupsTab
           followups={postLaunchFollowups}
@@ -70,7 +90,7 @@ const DashboardTabs = ({
         />
       );
 
-    case "withdrawals": // ✨ جديد: تاب طلبات الانسحاب
+    case "withdrawals":
       return (
         <WithdrawalRequestsTab
           withdrawalRequests={withdrawalRequests}

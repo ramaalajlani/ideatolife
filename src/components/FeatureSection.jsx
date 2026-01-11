@@ -42,14 +42,14 @@ const FeatureSection = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 text-orange-500">
+      <div className="flex justify-center items-center h-64 text-orange-500 font-bold uppercase tracking-widest">
         Loading features...
       </div>
     );
   }
 
   return (
-    <div className="relative mt-20 border-b border-neutral-800 min-h-[800px] bg-gray-900">
+    <div className="relative mt-20 border-b border-neutral-800 min-h-[800px] bg-[#0F172A]">
       
       {/* Title */}
       <motion.div
@@ -57,51 +57,56 @@ const FeatureSection = () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="text-center"
+        className="text-center pt-10"
       >
-        <span className="bg-gray-800 text-orange-500 rounded-full h-6 text-sm font-medium px-2 py-1 uppercase">
+        <span className="bg-orange-500/10 text-orange-500 rounded-full h-6 text-sm font-black px-4 py-1 uppercase tracking-tighter">
           Features
         </span>
-        <h2 className="text-3xl sm:text-5xl lg:text-6xl mt-10 lg:mt-20 tracking-wide">
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl mt-10 lg:mt-20 tracking-tight font-black text-white">
           Transform Ideas Into{" "}
-          <span className="bg-gradient-to-r from-orange-500 to-orange-800 text-transparent bg-clip-text">
+          <span className="bg-gradient-to-r from-orange-400 to-orange-600 text-transparent bg-clip-text">
             Successful Businesses
           </span>
         </h2>
       </motion.div>
 
-      {/* Features */}
+      {/* Features Grid */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true }}
-        className="flex flex-wrap mt-10 lg:mt-20"
+        className="flex flex-wrap mt-10 lg:mt-20 px-4"
       >
         {backendFeatures.map((feature, index) => {
-          // استخدم نفس أيقونة feature من constants حسب الـ index (أو افتراضي)
           const icon = features[index % features.length]?.icon;
 
           return (
             <motion.div
               key={feature.id}
               variants={itemVariants}
-              className="w-full sm:w-1/2 lg:w-1/3"
+              className="w-full sm:w-1/2 lg:w-1/3 p-4"
               whileHover={{
-                y: -8,
-                scale: 1.02,
-                transition: { duration: 0.3, ease: "easeOut" },
+                y: -10,
+                transition: { duration: 0.3 },
               }}
             >
-              <div className="flex cursor-pointer hover:bg-gray-800/50 transition-all duration-300 rounded-xl p-4 mx-2">
-                <div className="flex mx-6 h-10 w-10 p-2 bg-gray-800 text-orange-700 justify-center items-center rounded-full group-hover:bg-orange-700 group-hover:text-white transition-colors duration-300">
+              {/* البطاقة باللون الأبيض */}
+              <div className="bg-white group cursor-pointer h-full rounded-[2.5rem] p-8 shadow-xl shadow-black/20 hover:shadow-orange-500/20 transition-all duration-500 border border-gray-100 flex flex-col items-start text-left">
+                
+                {/* أيقونة مميزة */}
+                <div className="flex mb-6 h-14 w-14 bg-orange-50 text-orange-600 justify-center items-center rounded-2xl group-hover:bg-orange-500 group-hover:text-white transition-all duration-500 shadow-inner">
                   {icon}
                 </div>
+                
                 <div>
-                  <h5 className="mt-1 mb-6 text-xl text-white group-hover:text-orange-400 transition-colors duration-300">
+                  {/* عنوان باللون الكحلي الغامق ليكون واضحاً على الأبيض */}
+                  <h5 className="mb-4 text-2xl font-black text-[#0F172A] group-hover:text-orange-600 transition-colors duration-300">
                     {feature.title}
                   </h5>
-                  <p className="text-md p-2 mb-20 text-neutral-500 group-hover:text-neutral-300 transition-colors duration-300">
+                  
+                  {/* وصف بلون رمادي داكن مريح للعين */}
+                  <p className="text-md leading-relaxed text-gray-500 font-medium group-hover:text-gray-700 transition-colors duration-300">
                     {feature.text}
                   </p>
                 </div>

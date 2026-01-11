@@ -107,34 +107,35 @@ const LoginCommitteeMember = () => {
               )}
             </div>
 
-            {/* Password */}
-            <div className="relative">
-              <label className="block text-slate-600 text-sm mb-2 italic">
-                Password
-              </label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`w-full px-5 py-4 rounded-lg border ${errors.password ? 'border-red-500' : 'border-slate-300'} focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
-                placeholder="Type your password"
-                required
-              />
-              <Lock className="absolute right-4 top-[50px] text-slate-400" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-4 top-[50px] text-slate-500"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1 italic">
-                  {errors.password[0]}
-                </p>
-              )}
-            </div>
+<div className="relative">
+  <label className="block text-slate-600 text-sm mb-2 italic">
+    Password
+  </label>
+  <input
+    type={showPassword ? 'text' : 'password'}
+    name="password"
+    value={formData.password}
+    onChange={handleInputChange}
+    className={`w-full px-5 py-4 rounded-lg border pl-12 pr-12 ${errors.password ? 'border-red-500' : 'border-slate-300'} focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 italic`}
+    placeholder="Type your password"
+    required
+  />
+  {/* Lock icon على اليسار */}
+  <Lock className="absolute left-4 top-[50px] text-slate-400" />
+  {/* Eye icon على اليمين */}
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-[50px] text-slate-500 hover:text-slate-700"
+  >
+    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+  </button>
+  {errors.password && (
+    <p className="text-red-500 text-sm mt-1 italic">
+      {errors.password[0]}
+    </p>
+  )}
+</div>
 
             {/* Submit */}
             <button

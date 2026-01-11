@@ -77,6 +77,10 @@ const MeetingCalendar = () => {
     navigate('/profile');
   };
 
+  const handleMonthChange = (newDate) => {
+    setCurrentDate(newDate); // تحديث الشهر
+  };
+
   const getMeetingsForSelectedDate = () => {
     return meetings.filter(meeting => {
       const meetingDate = new Date(meeting.meeting_date);
@@ -211,6 +215,7 @@ const MeetingCalendar = () => {
                 meetings={meetings}
                 onDateSelect={handleDateSelect}
                 onMeetingSelect={handleMeetingSelect}
+                onMonthChange={handleMonthChange} // ✅ هنا
               />
             </div>
           </div>

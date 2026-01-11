@@ -6,20 +6,20 @@ const containerVariants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.1,
       delayChildren: 0.2,
     },
   },
 };
 
 const wordVariants = {
-  hidden: { opacity: 0, y: 50 },
+  hidden: { opacity: 0, y: 30 },
   show: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.6,
-      ease: [0.16, 1, 0.3, 1],
+      ease: [0.22, 1, 0.36, 1],
     },
   },
 };
@@ -31,7 +31,7 @@ const HeroSection = () => {
   const parallaxY = useTransform(scrollY, [0, 400], [0, -60]);
 
   const handleStartFree = () => {
-    navigate('/register'); // تم التعديل هنا
+    navigate('/register');
   };
 
   const title = "Software Startup Incubator Platform";
@@ -39,35 +39,21 @@ const HeroSection = () => {
 
   const subTitle =
     "Build, launch, and scale your software startup with expert guidance, smart tools, and a collaborative ecosystem designed for ambitious founders.";
-  const subTitleWords = subTitle.split(" ");
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden bg-white">
       
-      {/* --- عناصر الخلفية المتحركة --- */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white">
-        {/* فقاعة علوية يمين */}
+      {/* --- الخلفية المتحركة (تدرجات هادئة جداً) --- */}
+      <div className="absolute inset-0 -z-10 h-full w-full">
         <motion.div 
           animate={{
-            x: [0, 30, 0],
-            y: [0, 50, 0],
-            scale: [1, 1.1, 1],
+            x: [0, 20, 0],
+            opacity: [0.4, 0.6, 0.4],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-orange-100 rounded-full blur-[120px] opacity-60" 
-        />
-        {/* فقاعة سفلية يسار */}
-        <motion.div 
-          animate={{
-            x: [0, -40, 0],
-            y: [0, -20, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-red-50 rounded-full blur-[120px] opacity-50" 
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-orange-50 rounded-full blur-[120px]" 
         />
       </div>
-      {/* --------------------------- */}
 
       <motion.div
         variants={containerVariants}
@@ -75,54 +61,58 @@ const HeroSection = () => {
         whileInView="show"
         viewport={{ once: true }}
         style={{ y: parallaxY }}
-        className="flex flex-col items-center mt-6 lg:mt-20 px-4 min-h-[80vh] justify-center"
+        className="flex flex-col items-center mt-10 lg:mt-24 px-4 min-h-[85vh] justify-center"
       >
-        {/* Title */}
-        <motion.h1 className="text-4xl sm:text-7xl lg:text-8xl text-center tracking-wide font-bold flex flex-wrap justify-center">
-          {titleWords.map((word, index) => (
-            <motion.span
-              key={index}
-              variants={wordVariants}
-              className="mx-1 bg-gradient-to-r from-orange-500 to-red-800 text-transparent bg-clip-text"
-            >
-              {word}
-            </motion.span>
-          ))}
+        {/* Title: استخدام الأسود القاتم مع لمسات البرتقالي */}
+        <motion.h1 className="text-5xl sm:text-7xl lg:text-9xl text-center tracking-tighter font-black text-[#0f172a] flex flex-wrap justify-center leading-[0.95]">
+          {titleWords.map((word, index) => {
+            // تلوين كلمات معينة بالبرتقالي لكسر الجمود
+            const isHighlight = word === "Incubator" || word === "Platform";
+            return (
+              <motion.span
+                key={index}
+                variants={wordVariants}
+                className={`mx-2 ${isHighlight ? 'text-[#f87115]' : 'text-[#0f172a]'}`}
+              >
+                {word}
+              </motion.span>
+            );
+          })}
         </motion.h1>
 
-        {/* Sub Title */}
-        <motion.h2 className="mt-6 text-xl sm:text-2xl lg:text-3xl text-center max-w-5xl text-gray-700 leading-relaxed flex flex-wrap justify-center">
-          {subTitleWords.map((word, index) => (
-            <motion.span
-              key={index}
-              variants={wordVariants}
-              className="mx-1"
-            >
-              {word}
-            </motion.span>
-          ))}
-        </motion.h2>
-
-        {/* Description */}
+        {/* Sub Title: خط أسود متوسط الوضوح */}
         <motion.p
           variants={wordVariants}
-          className="mt-10 text-lg text-center max-w-4xl text-gray-600"
+          className="mt-8 text-lg sm:text-xl lg:text-2xl text-center max-w-4xl text-[#334155] font-semibold leading-relaxed"
         >
-          A digital incubator dedicated to software and tech projects, helping founders
-          transform ideas into scalable applications and platforms.
+          {subTitle}
         </motion.p>
 
-        {/* Button */}
-        <motion.div variants={wordVariants} className="my-10">
+        {/* Description: خط أنحف للوصف التفصيلي */}
+        <motion.p
+          variants={wordVariants}
+          className="mt-6 text-base sm:text-lg text-center max-w-2xl text-gray-500 font-medium"
+        >
+          A digital incubator dedicated to software and tech projects, helping founders
+          transform ideas into <span className="text-[#0f172a] font-bold">scalable applications</span>.
+        </motion.p>
+
+        {/* Buttons: زر برتقالي بظل أسود خفيف */}
+        <motion.div variants={wordVariants} className="mt-12 flex flex-col sm:flex-row gap-4">
           <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05, backgroundColor: "#ea580c" }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleStartFree}
-            className="bg-[#f87115] py-4 px-8 rounded-md text-white font-bold hover:bg-orange-600 transition-colors text-lg shadow-lg"
+            className="bg-[#f87115] py-5 px-10 rounded-2xl text-white font-black text-xl shadow-[0_20px_50px_rgba(248,113,21,0.3)] transition-all duration-300 uppercase tracking-tight"
           >
             Start for Free
           </motion.button>
+          
+
         </motion.div>
+
+        {/* مؤشر إحصائي بسيط لتعزيز الثقة */}
+
       </motion.div>
     </div>
   );
