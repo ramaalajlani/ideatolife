@@ -549,7 +549,7 @@ const GanttChartDetails = () => {
   };
 
   const handleBackClick = () => {
-    navigate('/committee/gantt-charts');
+    navigate('/committee-dashboard');
   };
 
   if (loading) {
