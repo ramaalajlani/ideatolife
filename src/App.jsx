@@ -37,6 +37,7 @@ import Notifications from './components/Notifications/Notifications';
 import DashboardSidebar from './pages/dashboardcommit/CommitteeDashboard/components/DashboardSidebar/DashboardSidebar';
 import IdeaOwnerTransactions from "./pages/IdeaOwnerTransactions";
 import GanttChartTabs from './pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/GanttChartTabs';
+import CommitteeProfile from './pages/dashboardcommit/CommitteeProfile';
 // أضف هذا مع بقية الاستيرادات في الأعلى
 import ProfitDistribution from './pages/dashboardcommit/CommitteeDashboard/components/DashboardTabs/ProfitDistribution';
 
@@ -87,6 +88,7 @@ const App = () => {
     <ProfitDistribution />
   </LayoutWrapper>
 } />
+      <Route path="/committee/profile" element={<CommitteeProfile />} />
 
                 {/* صفحات اللجنة */}
                 <Route path="/committee-dashboard/:ideaId?" element={

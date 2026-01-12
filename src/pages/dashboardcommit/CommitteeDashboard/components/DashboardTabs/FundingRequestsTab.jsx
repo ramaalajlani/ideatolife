@@ -65,6 +65,32 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
     }
   };
 
+  const submitReleaseEvaluation = async () => {
+    if (!selectedFunding) return;
+    const token = localStorage.getItem("committee_token");
+    setLoading(true);
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/api/fundings/${selectedFunding.funding_id}/evaluate`,
+        {
+          is_approved: isApproved,
+          approved_amount: approvedAmount,
+          committee_notes: committeeNotes,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("✅ Release evaluation submitted successfully!");
+      setSelectedFunding(null);
+      if (typeof refreshData === "function") refreshData();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "❌ Failed to submit evaluation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-64 space-y-4">
@@ -311,7 +337,7 @@ const FundingRequestsTab = ({ fundingRequests = [], getStatusBadge, refreshData,
               </button>
 
               <button
-                onClick={submitEvaluation}
+                onClick={selectedFunding.type === "funding" ? submitReleaseEvaluation : submitEvaluation}
                 disabled={loading}
                 className={`px-6 py-2 text-sm font-medium text-white rounded-lg transition-all ${
                   loading

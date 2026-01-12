@@ -8,11 +8,13 @@ import {
   BarChart3,
   Map,
   Home,
-  DollarSign
+  DollarSign,
+  CreditCard
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import profileService from '../services/profileService';
 import notificationService from '../services/notificationService';
+import axios from 'axios';
 
 const SidebarContext = createContext();
 
@@ -30,13 +32,27 @@ export default function Sidebar({ children, activeItem = 'home' }) {
   const [loading, setLoading] = useState(!userData);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [wallet, setWallet] = useState(null); // جديد: المحفظة
 
   const navigate = useNavigate();
   const location = useLocation();
 
+  // حفظ حالة Sidebar
   useEffect(() => {
     localStorage.setItem('sidebar_expanded', JSON.stringify(expanded));
   }, [expanded]);
+
+  // تحديث userData من localStorage
+  useEffect(() => {
+    const handleUserDataUpdate = () => {
+      const saved = localStorage.getItem('userData');
+      if (saved) {
+        setUserData(JSON.parse(saved));
+      }
+    };
+    window.addEventListener('userDataUpdated', handleUserDataUpdate);
+    return () => window.removeEventListener('userDataUpdated', handleUserDataUpdate);
+  }, []);
 
   // جلب بيانات المستخدم
   useEffect(() => {
@@ -50,7 +66,8 @@ export default function Sidebar({ children, activeItem = 'home' }) {
             email: response.idea_owner?.email || "",
             profile_image: response.idea_owner?.profile_image || null,
             role: response.idea_owner?.role || "صاحب فكرة",
-            phone: response.idea_owner?.phone || ""
+            phone: response.idea_owner?.phone || "",
+            bio: response.idea_owner?.bio || ""
           };
           setUserData(userProfile);
           localStorage.setItem('userData', JSON.stringify(userProfile));
@@ -62,9 +79,11 @@ export default function Sidebar({ children, activeItem = 'home' }) {
           email: "",
           profile_image: null,
           role: "صاحب فكرة",
-          phone: ""
+          phone: "",
+          bio: ""
         };
         setUserData(defaultUser);
+        localStorage.setItem('userData', JSON.stringify(defaultUser));
       } finally {
         setLoading(false);
       }
@@ -84,6 +103,24 @@ export default function Sidebar({ children, activeItem = 'home' }) {
       }
     };
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // جديد: جلب الرصيد من API
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://127.0.0.1:8000/api/my_wallet', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setWallet(response.data.wallet || null);
+      } catch (err) {
+        console.error("Failed to fetch wallet:", err);
+      }
+    };
+    fetchWallet();
   }, []);
 
   const getIdeaIdFromPath = () => {
@@ -111,6 +148,16 @@ export default function Sidebar({ children, activeItem = 'home' }) {
     localStorage.setItem('userData', JSON.stringify(newData));
   };
 
+  const getProfileImage = () => {
+    if (userData?.profile_image) {
+      if (userData.profile_image.startsWith('http') || userData.profile_image.startsWith('/')) {
+        return userData.profile_image;
+      }
+      return `http://localhost:8000/storage/${userData.profile_image}`;
+    }
+    return null;
+  };
+
   return (
     <div className={`fixed left-0 top-0 h-screen bg-gray-900 border-r border-gray-700 shadow-lg transition-all duration-300 z-50 ${
       expanded ? 'w-64' : 'w-20'
@@ -135,6 +182,14 @@ export default function Sidebar({ children, activeItem = 'home' }) {
         ) : (
           <span className="text-2xl font-black text-[#f87115]">I2</span>
         )}
+
+        {/* عرض رصيد المحفظة تحت اللوغو */}
+        {wallet && expanded && (
+          <div className="mt-3 flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-xl">
+            <CreditCard size={18} className="text-white" />
+            <span className="text-sm font-semibold text-white "> My wallet  ({wallet.balance}  SPY)</span>
+          </div>
+        )}
       </div>
 
       {/* زر توسيع/طي القائمة */}
@@ -156,7 +211,8 @@ export default function Sidebar({ children, activeItem = 'home' }) {
           userData,
           updateUserData,
           notifications,
-          unreadCount
+          unreadCount,
+          wallet
         }}>
           <ul className="flex flex-col py-4 space-y-2 px-3">
             {children}
@@ -180,21 +236,20 @@ export default function Sidebar({ children, activeItem = 'home' }) {
               </div>
             ) : (
               <>
-                {userData?.profile_image ? (
-                  <img 
-                    src={`http://127.0.0.1:8000${userData.profile_image}`} 
-                    alt={userData.name}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-orange-500"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextElementSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-md">
-                    <User size={16} className="text-white" />
-                  </div>
-                )}
+                <div className="relative">
+                  {getProfileImage() ? (
+                    <img 
+                      src={getProfileImage()} 
+                      alt={userData?.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-700"
+                      onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold border-2 border-gray-700">
+                      {userData?.name?.charAt(0) || "U"}
+                    </div>
+                  )}
+                </div>
                 
                 {expanded && (
                   <div className="ml-3 flex-1 overflow-hidden">
@@ -204,6 +259,11 @@ export default function Sidebar({ children, activeItem = 'home' }) {
                     <div className="text-xs text-gray-400 truncate">
                       {userData?.role || "صاحب فكرة"}
                     </div>
+                    {userData?.email && (
+                      <div className="text-xs text-gray-500 truncate mt-0.5">
+                        {userData.email}
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -292,7 +352,6 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
   const { ideaId: contextIdeaId, unreadCount } = useContext(SidebarContext);
   const navigate = useNavigate();
 
-  // استخدام currentIdeaId -> contextIdeaId -> آخر ideaId محفوظ في localStorage
   const targetIdeaId = currentIdeaId || contextIdeaId || localStorage.getItem('lastIdeaId');
 
   const handleItemClick = (name, specificIdeaId = null) => {
@@ -305,7 +364,7 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
       'reports': ideaIdToUse ? `/ideas/${ideaIdToUse}/reports` : '/reports',
       'meetings': ideaIdToUse ? `/ideas/${ideaIdToUse}/meetings` : '/meetings',
       'notifications': '/notifications',
-      'transactions': '/transactions', // ← أضفنا الشيكات هنا
+      'transactions': '/transactions',
     };
 
     if (routes[name]) {
@@ -369,7 +428,6 @@ export function SidebarItemsList({ activeItem, currentIdeaId }) {
         badge={unreadCount > 0 ? unreadCount : null}
       />
 
-      {/* ← عنصر الشيكات الجديد */}
       <SidebarItem 
         icon={<DollarSign size={20} />}
         text="My checks"

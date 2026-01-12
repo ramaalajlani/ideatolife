@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, CheckCheck, Clock, BellOff } from "lucide-react";
+import { Bell, CheckCheck, Clock, BellOff, CreditCard } from "lucide-react";
 import axios from "axios";
 
 const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
   const [notifications, setNotifications] = useState([]);
   const [count, setCount] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [wallet, setWallet] = useState(null);
   const dropdownRef = useRef();
 
-  // جلب الإشعارات عند تحميل المكون
+  // جلب الإشعارات
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const response = await axios.get("http://127.0.0.1:8000/api/notifications/owner", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setNotifications(response.data.notifications);
-        setCount(response.data.count);
+        setNotifications(response.data.notifications || []);
+        setCount(response.data.count || 0);
       } catch (error) {
         console.error("خطأ في جلب الإشعارات", error);
       }
@@ -24,44 +25,57 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
     fetchNotifications();
   }, [token]);
 
-  // تمييز إشعار كمقروء
+  // جلب المحفظة
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/api/my_wallet", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setWallet(response.data.wallet || null);
+      } catch (error) {
+        console.error("خطأ في جلب المحفظة", error);
+      }
+    };
+    fetchWallet();
+  }, [token]);
+
   const markAsRead = async (id) => {
     try {
-      await axios.post(`http://127.0.0.1:8000/api/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setNotifications(prev =>
-        prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+      await axios.post(
+        `http://127.0.0.1:8000/api/notifications/${id}/read`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      setCount(prevCount => Math.max(prevCount - 1, 0));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
       console.error("فشل في تمييز الإشعار كمقروء:", error);
     }
   };
 
-  // تمييز كل الإشعارات كمقروء
   const markAllAsRead = async () => {
     try {
-      const unreadNotifications = notifications.filter(n => !n.is_read);
+      const unreadNotifications = notifications.filter((n) => !n.is_read);
       await Promise.all(
-        unreadNotifications.map(n =>
-          axios.post(`http://127.0.0.1:8000/api/notifications/${n.id}/read`, {}, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+        unreadNotifications.map((n) =>
+          axios.post(
+            `http://127.0.0.1:8000/api/notifications/${n.id}/read`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
         )
       );
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, is_read: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setCount(0);
     } catch (error) {
       console.error("فشل في تمييز الإشعارات كمقروء:", error);
     }
   };
 
-  // إغلاق القائمة عند الضغط خارجها
+  // إغلاق Dropdown عند الضغط خارج
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -74,9 +88,10 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-20 bg-[#FFD586] border-b border-black/5 flex items-center justify-between px-6 md:px-10 z-50">
-        <div>
-          <h1 className="text-sm font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
+      <header className="fixed top-0 left-0 right-0 h-20 bg-[#FFD586] border-b border-black/5 flex items-center justify-between px-6 md:px-10 z-50 text-left">
+        {/* العنوان */}
+        <div className="flex-1 flex justify-center">
+          <h1 className="text-sm font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2 text-center">
             Dashboard <span className="text-gray-500 font-light">/</span>
             <span className="text-gray-900">
               {tabs.find((t) => t.id === activeTab)?.label}
@@ -85,7 +100,7 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 relative" ref={dropdownRef}>
-          {/* 🔔 Notifications Icon */}
+          {/* إشعارات */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -105,7 +120,7 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
             {dropdownOpen && (
               <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
                 {/* Header */}
-                <div className="px-5 py-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
+                <div className="px-5 py-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center text-left">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-gray-900">الإشعارات</span>
                     {count > 0 && (
@@ -123,9 +138,9 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
                 </div>
 
                 {/* Body */}
-                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                <div className="max-h-[400px] overflow-y-auto custom-scrollbar text-left">
                   {notifications.length === 0 ? (
-                    <div className="py-12 flex flex-col items-center justify-center text-gray-400">
+                    <div className="py-12 flex flex-col items-start justify-center text-gray-400">
                       <BellOff className="w-10 h-10 mb-2 opacity-20" />
                       <p className="text-sm">لا توجد إشعارات حالياً</p>
                     </div>
@@ -135,30 +150,35 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
                         key={n.id}
                         className={`group relative px-5 py-4 border-b border-gray-50 transition-all ${
                           !n.is_read ? "bg-white" : "bg-gray-50/20 opacity-80"
-                        } flex justify-between items-start`}
+                        } flex flex-col gap-2`}
                       >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex justify-between items-start gap-2">
-                            <p className={`text-sm leading-tight ${!n.is_read ? "font-bold text-gray-900" : "font-medium text-gray-700"}`}>
-                              {n.title}
-                            </p>
-                            <span className="text-[9px] text-gray-400 flex items-center gap-1 whitespace-nowrap">
-                              <Clock className="w-3 h-3" /> {new Date(n.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 italic">
-                            {n.message}
+                        <div className="flex justify-between items-start gap-2">
+                          <p
+                            className={`text-sm leading-tight ${
+                              !n.is_read ? "font-bold text-gray-900" : "font-medium text-gray-700"
+                            }`}
+                          >
+                            {n.title}
                           </p>
-                          <p className="text-[9px] text-gray-400 mt-1 self-end group-hover:text-orange-400">
-                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                          <span className="text-[9px] text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                            <Clock className="w-3 h-3" />{" "}
+                            {new Date(n.created_at).toLocaleDateString()}
+                          </span>
                         </div>
+                        <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 italic">
+                          {n.message}
+                        </p>
+                        <p className="text-[9px] text-gray-400 mt-1 self-start group-hover:text-orange-400">
+                          {new Date(n.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
 
-                        {/* زر تمييز كمقروء لكل إشعار */}
                         {!n.is_read && (
                           <button
                             onClick={() => markAsRead(n.id)}
-                            className="text-[10px] text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-full flex items-center gap-1 transition"
+                            className="text-[10px] text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded-full flex items-center gap-1 transition self-start"
                           >
                             <CheckCheck className="w-3 h-3" /> مقروء
                           </button>
@@ -171,10 +191,18 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
             )}
           </div>
 
+          {/* المحفظة */}
+          {wallet && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-2xl shadow-md">
+              <CreditCard className="w-5 h-5 text-gray-700" />
+              <span className="text-sm font-bold text-gray-900">{wallet.balance}</span>
+            </div>
+          )}
+
           {/* User Info */}
-          <div className="text-right hidden sm:block border-l border-black/10 pl-4 md:pl-6">
+          <div className="text-left hidden sm:block border-l border-black/10 pl-4 md:pl-6">
             <p className="text-xs font-bold text-gray-900">{userName}</p>
-            <p className="text-[9px] font-medium text-gray-600 uppercase tracking-tighter flex items-center justify-end gap-1">
+            <p className="text-[9px] font-medium text-gray-600 uppercase tracking-tighter flex items-center justify-start gap-1">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
               Active Now
             </p>
@@ -182,14 +210,23 @@ const DashboardHeader = ({ activeTab, tabs, userName, token }) => {
         </div>
 
         <style jsx>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #d1d5db;
+          }
         `}</style>
       </header>
 
-      {/* Padding to avoid content being hidden under fixed header */}
+      {/* Padding لتجنب تغطية المحتوى أسفل الهيدر */}
       <div className="pt-20"></div>
     </>
   );

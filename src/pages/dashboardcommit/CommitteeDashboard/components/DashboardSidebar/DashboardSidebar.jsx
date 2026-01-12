@@ -1,24 +1,44 @@
 // src/pages/dashboardcommit/CommitteeDashboard/components/DashboardSidebar/DashboardSidebar.jsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { LogOut, User, Clipboard, FileText, Calendar, BarChart3, Layers, CheckCircle, Activity, ChevronRight } from "lucide-react";
 
 const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdrawalCount = 0, profitDistributionCount = 0 }) => {
+  const navigate = useNavigate();
+
   const tabs = [
-    { id: "ideas", label: "Assigned Ideas", },
-    { id: "evaluations", label: "Evaluations",  },
-    { id: "meetings", label: "Meetings",  },
-    { id: "bmcs", label: "Business Models", },
-    { id: "fundingRequests", label: "Funding Requests", },
-    { id: "fundingChecks", label: "Our Transactions", },
-    { id: "gantt", label: "Gantt Chart", },
-    { id: "launchRequests", label: "Launch Requests",  },
-    { id: "postLaunch", label: "Post-Launch Followups", },
-    { id: "withdrawals", label: "Withdrawal Requests",},
- 
+    { id: "ideas", label: "Assigned Ideas", icon: <Clipboard size={18} /> },
+    { id: "evaluations", label: "Evaluations", icon: <CheckCircle size={18} /> },
+    { id: "meetings", label: "Meetings", icon: <Calendar size={18} /> },
+    { id: "bmcs", label: "Business Models", icon: <FileText size={18} /> },
+    { id: "fundingRequests", label: "Funding Requests", icon: <Activity size={18} /> },
+    { id: "fundingChecks", label: "Our Transactions", icon: <BarChart3 size={18} /> },
+    { id: "gantt", label: "Gantt Chart", icon: <Layers size={18} /> },
+    { id: "launchRequests", label: "Launch Requests", icon: <Activity size={18} /> },
+    { id: "postLaunch", label: "Post-Launch Followups", icon: <CheckCircle size={18} /> },
+    { id: "withdrawals", label: "Withdrawal Requests", icon: <BarChart3 size={18} /> },
   ];
 
+  const handleTabClick = (tabId) => {
+    if (tabId === 'profile') {
+      navigate('/committee/profile');
+    } else {
+      onTabChange(tabId);
+    }
+  };
+
+  // تعديل دالة تسجيل الخروج
+  const handleLogoutClick = () => {
+    // استدعاء دالة تسجيل الخروج الأصلية إذا كانت موجودة
+    if (onLogout) {
+      onLogout();
+    }
+    // ثم التوجيه لصفحة تسجيل الدخول الخاصة باللجنة
+    navigate('/login/committee-member');
+  };
+
   return (
-    <div className="fixed left-0 top-0 h-screen w-72 bg-[#0F172A] border-r border-slate-800 shadow-2xl flex flex-col z-50 pt-20"> {/* إضافة pt-20 هنا */}
+    <div className="fixed left-0 top-0 h-screen w-72 bg-[#0F172A] border-r border-slate-800 shadow-2xl flex flex-col z-50 pt-20">
       
       {/* Navigation tabs with Hidden Scrollbar */}
       <nav
@@ -42,7 +62,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdraw
           {tabs.map(tab => (
             <li key={tab.id}>
               <button
-                onClick={() => onTabChange(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`group relative flex items-center w-full px-4 py-3.5 rounded-xl transition-all duration-300
                   ${activeTab === tab.id
                     ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 translate-x-1"
@@ -70,19 +90,56 @@ const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdraw
               </button>
             </li>
           ))}
+
+          {/* زر الملف الشخصي */}
+          <li>
+            <button
+              onClick={() => handleTabClick('profile')}
+              className={`group relative flex items-center w-full px-4 py-3.5 rounded-xl transition-all duration-300
+                ${activeTab === 'profile'
+                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30 translate-x-1"
+                  : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+                }`}
+            >
+              <div className={`${activeTab === 'profile' ? "text-white" : "text-slate-500 group-hover:text-blue-400"} transition-colors`}>
+                <User size={18} />
+              </div>
+              
+              <span className="ml-3 text-[14px] font-semibold truncate flex-1 text-left">
+                my profile
+              </span>
+
+              {activeTab === 'profile' && (
+                <ChevronRight size={14} className="ml-1 opacity-50" />
+              )}
+            </button>
+          </li>
         </ul>
       </nav>
 
       {/* User profile & logout */}
       <div className="p-4 mt-auto border-t border-slate-800 bg-[#0F172A]">
         <div className="bg-slate-800/40 p-3 rounded-2xl flex items-center justify-between border border-slate-700/50">
-          <div className="flex items-center gap-3 overflow-hidden">
+          <div 
+            onClick={() => handleTabClick('profile')}
+            className="flex items-center gap-3 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex-1"
+          >
             <div className="relative shrink-0">
               {userData?.profile_image ? (
                 <img
                   src={`http://127.0.0.1:8000${userData.profile_image}`}
                   alt={userData.name}
                   className="w-10 h-10 rounded-xl object-cover border border-slate-600 shadow-sm"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = `
+                      <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    `;
+                  }}
                 />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -97,14 +154,14 @@ const DashboardSidebar = ({ activeTab, onTabChange, userData, onLogout, withdraw
                 {userData?.name || "Admin User"}
               </span>
               <span className="text-[11px] text-slate-500 font-medium truncate uppercase tracking-tighter">
-                {userData?.role || "Committee Member"}
+                {userData?.committee_role || "Committee Member"}
               </span>
             </div>
           </div>
 
           <button
-            onClick={onLogout}
-            className="p-2.5 hover:bg-red-500/10 hover:text-red-400 text-slate-500 rounded-xl transition-all duration-200 group"
+            onClick={handleLogoutClick}
+            className="p-2.5 hover:bg-red-500/10 hover:text-red-400 text-slate-500 rounded-xl transition-all duration-200 group shrink-0"
             title="Logout"
           >
             <LogOut size={18} className="group-hover:translate-x-0.5 transition-transform" />

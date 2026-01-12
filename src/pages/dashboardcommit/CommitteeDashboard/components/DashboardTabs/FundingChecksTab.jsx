@@ -17,7 +17,7 @@ const FundingChecksTab = () => {
       }
 
       const res = await axios.get("http://127.0.0.1:8000/api/committee/funding-checks", {
-        headers: { Authorization: `Bearer SYP{token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (res.data) {
@@ -118,8 +118,7 @@ const FundingChecksTab = () => {
         </div>
       )}
 
-
-
+ 
       {/* Wallets List */}
       <div className="space-y-6">
         {wallets.map((wallet) => (
@@ -143,7 +142,7 @@ const FundingChecksTab = () => {
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Current Balance</div>
                   <div className="text-2xl font-bold text-green-600">
-                    SYP{parseFloat(wallet.balance || 0).toLocaleString()}
+                    ${parseFloat(wallet.balance || 0).toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -162,7 +161,7 @@ const FundingChecksTab = () => {
                   </button>
                 </div>
 
-                <div className={`space-y-3   SYP{expandedWalletId === wallet.wallet_id ? '' : 'max-h-[300px] overflow-hidden'}`}>
+                <div className={`space-y-3 ${expandedWalletId === wallet.wallet_id ? '' : 'max-h-[300px] overflow-hidden'}`}>
                   {wallet.transactions.map((tx) => (
                     <div key={tx.transaction_id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                       
@@ -171,10 +170,10 @@ const FundingChecksTab = () => {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-900">TX-{tx.transaction_id}</span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium   SYP{getTypeBadge(tx.type)}`}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeBadge(tx.type)}`}>
                               {tx.type}
                             </span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium   SYP{getStatusBadge(tx.status)}`}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(tx.status)}`}>
                               {tx.status}
                             </span>
                           </div>
@@ -205,8 +204,8 @@ const FundingChecksTab = () => {
                           </div>
 
                           {/* Amount */}
-                          <div className={`text-lg font-bold   SYP{tx.direction === 'incoming' ? 'text-green-600' : 'text-gray-900'}`}>
-                            {tx.direction === 'incoming' ? '+' : '-'}SYP{parseFloat(tx.amount || 0).toLocaleString()}
+                          <div className={`text-lg font-bold ${tx.direction === 'incoming' ? 'text-green-600' : 'text-gray-900'}`}>
+                            {tx.direction === 'incoming' ? '+' : '-'}${parseFloat(tx.amount || 0).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -234,7 +233,7 @@ const FundingChecksTab = () => {
         ))}
       </div>
 
-
+   
     </div>
   );
 };
